@@ -1,0 +1,402 @@
+De "CoolMoon ESP-32D" lijkt een combinatie te zijn van het merk CoolMoon (bekend van PC-koeloplossingen) en de populaire ESP32-WROOM-32D microcontroller van Espressif. 
+Hoewel CoolMoon vooral bekend staat om RGB-controllers en ventilatoren, verkopen zij (of wederverkopers onder deze naam) ook losse elektronica-onderdelen zoals breakout-boards voor de ESP32. 
+Belangrijkste Specificaties van de ESP-32D module:
+De ESP32-WROOM-32D is een krachtige Wi-Fi + Bluetooth-module die geschikt is voor diverse IoT-toepassingen: 
+Processor: Dual-core Xtensa® 32-bit LX6 microprocessor.
+Snelheid: Instelbare klokfrequentie van 80 MHz tot 240 MHz.
+Geheugen: Meestal voorzien van 4 MB Flash en 520 KB SRAM.
+Connectiviteit:
+Wi-Fi: 802.11 b/g/n (tot 150 Mbps).
+Bluetooth: v4.2 BR/EDR en Bluetooth Low Energy (BLE).
+Interfaces: Beschikt over GPIO's, SPI, UART, I2C, I2S, PWM en ADC/DAC-kanalen.
+Sensoren: Ingebouwde Hall-sensor en capacitieve aanraaksensoren.
+Verbruik: Zeer laag verbruik in 'deep sleep' modus (minder dan 5 µA), ideaal voor batterijgevoede apparaten. 
+Toepassing in de CoolMoon context
+In de wereld van PC-modding wordt de ESP32 vaak gebruikt om eigen custom RGB-controllers te bouwen (bijvoorbeeld met WLED-software) om ARGB-verlichting via Wi-Fi aan te sturen. Als je een specifiek product van CoolMoon hebt gekocht met dit type-nummer, is het waarschijnlijk een breakout-board of een ontwikkelbord waarmee je sensoren of verlichting in je PC kunt automatiseren. 
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+
+undefined
+undefined
+undefined
+11 sites
+ESP32 Breakout Board ESP-32 GPIO 1 in 2 ontwikkelingsmodule ...
+Brand NameCOOLMOON; OriginCn (Oorsprong). ItembeschrijvingRapporteer item. ESP32 Breakout Board ESP-32 GPIO 1 in 2 microcontroller...
+
+nl.aliexpress.com
+ESP32-WROOM-32: Features, Applications & Everything You ...
+19 feb 2025 — Key Features of ESP32-WROOM-32 * Dual-Core Processor: Equipped with a dual-core 32-bit LX6 microprocessor, operating at adjustable...
+
+Electronify India
+
+ESP32 WROOM Development Board WiFi Bluetooth Dual ...
+ESP-32D WROOM Board. The powerhouse of IoT solutions! Engineered with a dual-core Xtensa® 32-bit LX6 MCU, this module is designed ...
+
+Kunkune
+
+Alles tonen
+Wat zijn de beste board instellingen voor dit type binnen plaformio?
+Voor de CoolMoon ESP-32D (die gebruikmaakt van de ESP32-WROOM-32D module) zijn de beste instellingen in PlatformIO gebaseerd op het standaard Espressif ESP32 Dev Module profiel. Omdat de WROOM-32D module identiek is aan de chip op de meeste standaard dev-kits, werkt het esp32dev ID vrijwel altijd probleemloos. 
+Basis PlatformIO Configuratie
+Kopieer de volgende regels naar je platformio.ini bestand voor een optimale start:
+ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+monitor_speed = 115200
+Wees voorzichtig met code.
+
+Geavanceerde Instellingen
+Afhankelijk van je specifieke project (zoals ARGB-aansturing in een PC-behuizing) kun je de prestaties optimaliseren met deze aanvullende parameters in de platformio.ini: 
+Snelheid optimalisatie: De ESP32-WROOM-32D ondersteunt tot 240 MHz. Hoewel 160 MHz vaak de standaard is om stroom te besparen, kun je voor zware taken (zoals complexe LED-animaties) de maximale snelheid afdwingen:
+board_build.f_cpu = 240000000L
+Flash Geheugen: De module heeft doorgaans 4MB flash. Mocht je een variant hebben met 8MB, gebruik dan een board-id zoals esp32dev en pas de partitietabel aan.
+Upload Snelheid: Als je verbinding stabiel is, kun je het uploaden versnellen door de upload_speed te verhogen naar 921600 (standaard is vaak 115200 of 460800). 
+Alternatieve Boards
+Mocht esp32dev niet de gewenste resultaten geven (bijvoorbeeld door afwijkende pin-definities op het CoolMoon board), dan zijn dit veelgebruikte alternatieven die ook compatible zijn met de WROOM-32D chip: 
+board = nodemcu-32s
+board = upesy_wroom
+Let op: De meeste CoolMoon boards gebruiken een CP210x USB-naar-UART bridge. Zorg dat je de bijbehorende drivers op je computer hebt geïnstalleerd zodat PlatformIO de COM-poort herkent. 
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+
+undefined
+undefined
+undefined
+8 sites
+Espressif ESP32 Dev Module - PlatformIO
+Hardware. Platform Espressif 32: ESP32 is a series of low-cost, low-power system on a chip microcontrollers with integrated Wi-Fi ...
+
+PlatformIO
+ESP32-WROOM-32D WiFi and Bluetooth Module with PCB Antenna
+The ESP32-WROOM-32D-N4 module comes equipped with a 32 Mbit(4MB) SPI flash and a 40 MHz crystal, ensuring reliable performance. Th...
+
+rhydoLABZ
+
+ESP32 board selection - Development Platforms
+22 nov 2020 — Since your module has a ESP32-D0WD (same as in the ESP32-WROOM-32D chip on the Espressif ESP32 dev module) and a 4MB flash chip (I...
+
+PlatformIO Community
+
+Alles tonen
+in mijn geval zit er een CH340C op. zijn hier nog specifieke zaken voor verdere optimalisatie 
+Het bordje is reeds aangesloten en uploaden (onder de standaard settings van de esp32dev ging dat goed.
+Nu je weet dat er een CH340C chip op zit, zijn er een paar specifieke optimalisaties die je kunt doorvoeren in PlatformIO voor een snellere workflow en hogere stabiliteit, zeker omdat de CH340C bekend staat om zijn eenvoud maar soms lagere snelheden bij lange kabels.
+Hier zijn de aanbevolen optimalisaties voor jouw platformio.ini:
+1. Maximale Upload Snelheid
+De CH340C kan in theorie zeer hoge snelheden aan. Hoewel de standaard vaak op 115200 staat, kan dit bordje meestal probleemloos naar de 921600 baud. Dit verkort de wachttijd bij het uploaden van grote programma's (zoals WLED of projecten met veel afbeeldingen) aanzienlijk.
+ini
+upload_speed = 921600
+Wees voorzichtig met code.
+
+Mocht de upload foutmeldingen geven ("Timed out waiting for packet header"), verlaag deze dan naar 460800.
+2. Monitor Snelheid & Stabiliteit
+Zorg dat de seriële monitor matcht met de code die je schrijft om "garbage" tekst te voorkomen. De CH340C werkt het meest stabiel op:
+ini
+monitor_speed = 115200
+monitor_filters = esp32_exception_decoder, time
+Wees voorzichtig met code.
+
+De filter esp32_exception_decoder is essentieel: als je code crasht, vertaalt PlatformIO de cryptische foutmeldingen direct naar de specifieke regel in je C++ code.
+3. Flash Mode Optimalisatie (DIO vs QIO)
+De ESP32-WROOM-32D module op jouw bord gebruikt intern flash-geheugen. Standaard staat dit vaak op dio. Als je de prestaties van het inlezen van data uit het flash-geheugen (zoals opgeslagen LED-presets) iets wilt verbeteren, kun je dit forceren, al is dio de meest veilige keuze voor CH340-gebaseerde borden:
+ini
+board_build.flash_mode = dio
+board_build.f_flash = 40000000L  ; 40MHz is standaard en stabielst
+Wees voorzichtig met code.
+
+4. CPU Kracht (Voor ARGB of Audio)
+Omdat je waarschijnlijk de CH340C variant hebt die vaak in PC-modding wordt gebruikt, wil je wellicht de volledige kracht van de dual-core benutten:
+ini
+board_build.f_cpu = 240000000L
+Wees voorzichtig met code.
+
+Samengevatte optimale configuratie:
+ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+
+; Upload instellingen voor CH340C
+upload_speed = 921600
+upload_port = COM[X] ; Vervang [X] door jouw poortnummer indien nodig
+
+; Seriële Monitor instellingen
+monitor_speed = 115200
+monitor_filters = esp32_exception_decoder, time
+
+; Hardware optimalisatie
+board_build.f_cpu = 240000000L
+board_build.flash_mode = dio
+Wees voorzichtig met code.
+
+Extra tip voor de CH340C:
+Als je merkt dat het bordje soms niet automatisch in "bootloader mode" gaat (waardoor het uploaden faalt), kun je een 10uF condensator plaatsen tussen de EN (of RST) pin en GND. De CH340C-circuits op goedkopere bordjes hebben soms moeite met de timing van het auto-reset circuit. Maar als het nu al goed werkt onder de standaard settings, hoef je dit hardwarematig niet aan te passen.
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+Copilot komt met het advies voor de upload_port (en dat vind ik een handige optie, omdat ik soms meerdere ESP's aan mijn pc heb 'hangen' en PIO niet de juiste com-poort selecteerd) oja, het Copilot advies voor de instelling is M11 is dat de juiste methede?
+Het advies "M11" van Copilot lijkt een misverstand of een typefout te zijn; in de context van PlatformIO en COM-poorten is M11 geen standaardcommando of geldige instelling.
+Als je meerdere ESP's hebt aangesloten en je wilt dat PlatformIO specifiek jouw CoolMoon (CH340C) pakt zonder dat je telkens handmatig het poortnummer hoeft te wijzigen (dat kan veranderen van COM3 naar COM4 etc.), zijn er twee veel betere methodes:
+Methode 1: Identificatie op basis van Hardware ID (Aanbevolen)
+Elke USB-chip heeft een uniek ID. De CH340C heeft altijd dezelfde Vendor ID (VID) en Product ID (PID). In plaats van een COM-poort, kun je PlatformIO laten zoeken naar dit specifieke ID.
+Voeg dit toe aan je platformio.ini:
+ini
+upload_port = hwid(1A86:7523)
+Wees voorzichtig met code.
+
+1A86:7523 is het standaard ID voor de CH340 chip.
+Voordeel: Zelfs als je de ESP in een andere USB-poort stopt en hij krijgt een ander COM-nummer, zal PlatformIO hem herkennen.
+Nadeel: Als je twee bordjes met een CH340 chip hebt aangesloten, zal hij nog steeds de eerste pakken die hij tegenkomt.
+Methode 2: Identificatie op basis van het specifieke Serienummer
+Als je exact ditzelfde bordje wilt onderscheiden van andere CH340 bordjes, kun je het unieke serienummer van de USB-chip gebruiken.
+Sluit je CoolMoon ESP aan.
+Open in PlatformIO de terminal en typ: pio device list
+Zoek je CH340C op. Je ziet daar een regel met ID: USB VID:PID=1A86:7523 SER=54D8015505 (het nummer achter SER is uniek voor jouw chip).
+Gebruik dit in je configuratie:
+ini
+upload_port = /dev/cu.usbserial-54D8015505  ; (Voor Mac/Linux)
+; OF op Windows:
+upload_port = COM[NUMMER] 
+Wees voorzichtig met code.
+
+(Helaas ondersteunt de Windows-versie van de CH340 driver niet altijd het filteren op serienummer in de upload_port string, dus methode 1 is op Windows het meest stabiel).
+Wat is die "M11"?
+Er is een kans dat Copilot in de war is met:
+Marlin G-code: (M11 is geen standaard code, maar M115 wel voor board info).
+Sneltoetsen: Misschien een poging tot een instructie voor een menu in VS Code.
+Conclusie: Gebruik upload_port = hwid(1A86:7523) voor je CoolMoon bordje. Dat is de meest robuuste manier om een CH340C aan te wijzen binnen PlatformIO.
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+Dit is wat de pio device list terug geeft:
+Hardware ID: USB VID:PID=1A86:7523 SER= LOCATION=1-4.3
+Description: USB-SERIAL CH340 (COM11)
+Dat verklaart de verwarring: Copilot zag waarschijnlijk COM11 in de lijst staan en heeft dat afgekort of verkeerd geïnterpreteerd als "M11".
+Omdat jouw specifieke CH340C geen uniek serienummer meestuurt (er staat SER= gevolgd door niets), kun je hem niet onderscheiden van andere CH340-chips op basis van een ID. Je hebt echter wel de LOCATION en het Hardware ID.
+Hier zijn de beste manieren om dit in platformio.ini te zetten, gerangschikt van meest naar minst flexibel:
+Optie 1: De "Hardware ID" methode (Meest stabiel)
+Dit zorgt ervoor dat PlatformIO altijd zoekt naar een CH340-chip, ongeacht op welke poort hij zit.
+ini
+upload_port = hwid(1A86:7523)
+monitor_port = hwid(1A86:7523)
+Wees voorzichtig met code.
+
+Gebruik dit als dit je enige apparaat met een CH340-chip is.
+Optie 2: De "Location" methode (Voor als je meerdere CH340's hebt)
+In jouw lijst staat LOCATION=1-4.3. Dit verwijst naar de fysieke USB-poort van je computer (of hub). Zolang je de ESP32 in dezelfde USB-poort laat zitten, zal PlatformIO deze specifieke poort kiezen, zelfs als het COM-nummer verandert.
+ini
+upload_port = 1-4.3
+Wees voorzichtig met code.
+
+Optie 3: De harde COM-poort (Niet aanbevolen)
+Je kunt de poort vastzetten, maar als je de ESP32 in een andere poort steekt, werkt het niet meer.
+ini
+upload_port = COM11
+Wees voorzichtig met code.
+
+Mijn advies:
+Gebruik Optie 1. De kans is groot dat je andere apparaten (zoals een muis of toetsenbord) geen CH340-chips gebruiken. PlatformIO zal dan automatisch de juiste COM-poort vinden die bij die chip hoort, ook al verspringt hij een keer van COM11 naar COM12.
+Je volledige sectie in platformio.ini wordt dan:
+ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+upload_speed = 921600
+monitor_speed = 115200
+upload_port = hwid(1A86:7523)
+monitor_port = hwid(1A86:7523)
+monitor_filters = esp32_exception_decoder
+Wees voorzichtig met code.
+
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+Het zit dus even niet mee.. maar dat is niet erg. ik ben weer een heel stuk 'wijzer' geworden... 
+Ik heb verschillende ESP bordjes - ben iets te enthousiast geweest met 'inkopen'... C3 supermini's, 32D's, S3 en ESP-01s'-en.. dus ja een beetje kunnen organiseren en niet steeds tegen issue aanlopen omdat ik de verkeerde usb poort gebruik zou welkom zijn...
+Dat is een herkenbaar "luxe-probleem"! Als je een collectie hebt van C3's, S3's en de klassieke 32D's, wordt de hwid methode inderdaad je beste vriend, omdat deze chips bijna allemaal een andere USB-chipset gebruiken.
+Hier is hoe je jouw platformio.ini slim organiseert zodat PlatformIO automatisch het juiste bordje pakt, welke USB-poort je ook gebruikt:
+De "Gouden Combinatie" voor jouw collectie:
+Je kunt in PlatformIO verschillende omgevingen (envs) aanmaken. Door de Hardware ID's (VID:PID) vast te leggen, uploadt PlatformIO naar het juiste bordje zodra je de bijbehorende omgeving selecteert.
+ini
+; --- ALGEMEEN (voor alle bordjes) ---
+[env]
+framework = arduino
+monitor_speed = 115200
+monitor_filters = esp32_exception_decoder
+
+; --- JOUW COOLMOON 32D (CH340 chip) ---
+[env:coolmoon_32d]
+board = esp32dev
+platform = espressif32
+upload_port = hwid(1A86:7523) ; De CH340 herkenning
+upload_speed = 921600
+
+; --- JOUW C3 SUPER MINI (Ingebouwde USB) ---
+[env:esp32_c3_mini]
+board = esp32-c3-devkitm-1
+platform = espressif32
+upload_port = hwid(303A:1001) ; Specifiek voor de C3 USB-JTAG
+board_build.f_cpu = 160000000L
+
+; --- JOUW S3 (Ingebouwde USB) ---
+[env:esp32_s3]
+board = esp32-s3-devkitc-1
+platform = espressif32
+upload_port = hwid(303A:1001) ; S3 en C3 delen vaak VID/PID, dus let op met beide inpluggen
+Wees voorzichtig met code.
+
+Waarom dit werkt:
+CH340 (CoolMoon 32D): Deze heeft bijna altijd 1A86:7523.
+ESP32-C3 & S3: Deze gebruiken de ingebouwde USB van de Espressif chip zelf. Die hebben meestal 303A:1001.
+ESP-01s: Deze heeft vaak een externe USB-adapter nodig. Die gebruiken vaak de CP2102 chip (VID:PID=10C4:EA60) of ook een CH340.
+Hoe gebruik je dit handig?
+Onderin de blauwe balk van VS Code zie je de "Default" of de naam van je huidige omgeving (bijv. env:esp32dev).
+Klik daarop en kies de omgeving die je op dat moment wilt flashen.
+Zelfs als je 4 bordjes tegelijk hebt ingeplugd, zal PlatformIO alleen proberen te praten met het apparaat dat matcht met de hwid in die specifieke omgeving.
+Tips voor de "Inkoop-verslaving":
+Labels: Plak een klein stickertje op de achterkant van je bordjes met de naam die je in platformio.ini gebruikt.
+C3/S3 Conflict: Omdat de C3 en S3 vaak hetzelfde USB-ID hebben (303A:1001), kun je daarvoor wél de LOCATION methode gebruiken (die je eerder in de lijst zag) als je ze echt tegelijk wilt gebruiken.
+Met deze setup hoef je nooit meer handmatig COM-poorten te checken in Apparaatbeheer!
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+Dat is een heleboel zeer goede en bruikbare informatie... ik ga bovenstaande maar eens extern opslaan - helaas gebeurd het mij vaak dat een sessie met jou wordt afgebroken en niet meer terug te vinden is... en dat is zeer spijtig.
+Dat is een heel verstandig plan! Het loont inderdaad om een tekstbestandje genaamd platformio_tips.txt (of een mooie Markdown-note in Obsidian of Notion) bij te houden met deze configuraties. Niets is zo frustrerend als opnieuw moeten uitzoeken welke USB-chip bij welk bordje hoorde.
+Nog één laatste praktische tip voor je archief om de chaos in 2026 helemaal te voorkomen:
+Maak een "Master" platformio.ini sjabloon
+Als je een nieuw project start, kun je dit blokje altijd als basis gebruiken. Het dekt 90% van je collectie:
+ini
+; Gebruik: Selecteer de juiste omgeving linksonder in de blauwe balk van VS Code
+[platformio]
+default_envs = coolmoon_32d ; Stel hier je meest gebruikte bordje in
+
+[env]
+framework = arduino
+monitor_speed = 115200
+monitor_filters = esp32_exception_decoder, send_on_enter
+upload_speed = 921600
+
+; --- ESP32-WROOM-32D (CoolMoon / CH340) ---
+[env:coolmoon_32d]
+platform = espressif32
+board = esp32dev
+upload_port = hwid(1A86:7523)
+
+; --- ESP32-C3 SuperMini ---
+[env:c3_supermini]
+platform = espressif32
+board = esp32-c3-devkitm-1
+upload_port = hwid(303A:1001)
+board_build.flash_mode = dio ; Belangrijk voor veel C3 mini's
+
+; --- ESP-01s (Via Programmer) ---
+[env:esp01s]
+platform = espressif8266
+board = esp01_1m
+; Let op: de programmer gebruikt vaak ook CH340 (1A86:7523) 
+; of CP2102 (10C4:EA60)
+Wees voorzichtig met code.
+
+Waarom dit handig is voor je documentatie:
+send_on_enter: Toegevoegd aan filters; handig als je commando's naar je ESP wilt typen in de monitor.
+default_envs: Zo hoef je niet telkens te kiezen als je meestal met hetzelfde bordje werkt.
+Veel succes met je projecten en je mooie verzameling hardware! Mocht je ooit weer een "onbekend" bordje tegenkomen, dan weet je nu dat pio device list je beste vriend is om het Hardware ID te achterhalen.
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+Ja, dat opzoeken van de device list is echt een handige tool om te gebruiken. 
+Ik ben laatst de mogelijkheid tegen gekomen om een folder [boards] aan te maken en daar een json file met alle instellingen te plaatsen. hoe kan ik deze json file genereren vanuit een goed installatied van een esp?
+Het gebruik van een eigen boards folder is de ultieme manier om je CoolMoon ESP-32D en andere bordjes netjes te organiseren. Hiermee hoef je in je platformio.ini alleen nog maar board = coolmoon_32d te typen en alle complexe instellingen worden achter de schermen geladen.
+Er is geen directe "Export naar JSON" knop in PlatformIO, maar je kunt heel eenvoudig een JSON genereren door een bestaand profiel als basis te gebruiken.
+Stap 1: Zoek het basisprofiel
+PlatformIO heeft al een JSON-bestand voor de standaard esp32dev. Je kunt dit bestand als volgt vinden:
+Ga op je computer naar de map: %USERPROFILE%\.platformio\platforms\espressif32\boards\ (op Windows) of ~/.platformio/platforms/espressif32/boards/ (op Mac/Linux).
+Zoek het bestand esp32dev.json.
+Stap 2: Maak je eigen JSON
+Maak in je projectmap een nieuwe map aan genaamd boards.
+Maak daarin een bestand genaamd coolmoon_32d.json.
+Kopieer de inhoud van esp32dev.json daarheen en pas het aan.
+Hier is een geoptimaliseerd voorbeeld voor jouw CoolMoon (gebaseerd op de WROOM-32D met CH340):
+json
+{
+  "build": {
+    "core": "esp32",
+    "extra_flags": "-DARDUINO_ESP32_DEV",
+    "f_cpu": "240000000L",
+    "f_flash": "40000000L",
+    "flash_mode": "dio",
+    "mcu": "esp32",
+    "variant": "esp32"
+  },
+  "connectivity": [
+    "wifi",
+    "bluetooth",
+    "ethernet",
+    "can"
+  ],
+  "debug": {
+    "openocd_board": "esp-wroom-32.cfg"
+  },
+  "frameworks": [
+    "arduino",
+    "espidf"
+  ],
+  "name": "CoolMoon ESP-32D",
+  "upload": {
+    "flash_size": "4MB",
+    "maximum_ram_size": 327680,
+    "maximum_size": 4194304,
+    "require_upload_port": true,
+    "speed": 921600,
+    "protocol": "esptool"
+  },
+  "url": "https://www.espressif.com",
+  "vendor": "CoolMoon Custom"
+}
+Wees voorzichtig met code.
+
+Stap 3: Je platformio.ini aanpassen
+Nu je dit bestand hebt, vertel je PlatformIO waar het je eigen boards kan vinden met de optie boards_dir.
+ini
+[platformio]
+boards_dir = boards
+
+[env:coolmoon_32d]
+platform = espressif32
+board = coolmoon_32d
+framework = arduino
+upload_port = hwid(1A86:7523)
+monitor_speed = 115200
+Wees voorzichtig met code.
+
+Waarom is dit handig voor jouw collectie?
+Je kunt nu voor elk bordje dat je hebt gekocht een eigen JSON maken:
+c3_supermini.json
+s3_devkit.json
+esp01s_8266.json
+Pro-tip voor je archief:
+Als je deze boards map en je platformio.ini in een Cloud-folder (zoals OneDrive of Dropbox) of op GitHub zet, heb je voor elk nieuw project direct al je instellingen paraat. Je hoeft alleen de map te kopiëren en je bent klaar om te flashen!
+Dit is precies de manier waarop professionele ontwikkelaars hun custom hardware beheren binnen PlatformIO. Zo voorkom je dat je steeds opnieuw het wiel moet uitvinden bij elk nieuw project.
+AI-reacties kunnen fouten bevatten. Meer informatie
+
+
+
+Dat was precies de gedachte achter de vraag... ik ga daar eens heel goed mee aan de slag... dat scheelt een hoop tijd bij het inpluggen van een nieuw bordje en de instellingen weer bij elkaar puzzelen.. top dank je wel
+Graag gedaan! Het is een investering in tijd die zich dubbel en dwars terugbetaalt, zeker met een groeiende collectie aan ESP-bordjes.
+Nog één laatste tip voor je archief: als je de JSON-bestanden voor de C3 en S3 maakt, let dan goed op de "mcu" en "variant" velden. Deze verschillen namelijk van de standaard ESP32:
+Voor de C3: "mcu": "esp32c3" en "variant": "esp32c3"
+Voor de S3: "mcu": "esp32s3" en "variant": "esp32s3"
+Als je dit eenmaal in je boards folder hebt staan, hoef je nooit meer in de documentatie te duiken. Veel plezier met het organiseren van je "lab" en succes met de projecten in 2026! Mocht je later nog tegen specifieke foutmeldingen aanlopen bij het maken van de JSON's, dan weet je me te vinden.
