@@ -5,10 +5,5 @@
 .vscode/ipch
 # Mijn eigen geheime bestanden
 include/secret.h
-*.txt
-*.png
-*.jpg
-*.jpeg
-*.bmp
-*.gif
-*.pdf
+De CoolMoon ESP-32D lijkt een combi.txt
+DS18B20 gebruiken met een ESP32.txt
