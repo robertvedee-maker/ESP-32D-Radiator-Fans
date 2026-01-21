@@ -3,3 +3,12 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+# Mijn eigen geheime bestanden
+include/secret.h
+*.txt
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.gif
+*.pdf
