@@ -17,9 +17,9 @@
 // #include <helpers.h>
 // #include <math.h> // Nodig voor log() berekening
 
-// U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.50 128x128
-// // U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); //OLED 1.54 128x64
-U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.30 128x64
+U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.50 128x128
+// U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); //OLED 1.54 128x64
+// U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.30 128x64
 // U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.54 128x64
 
 bool eersteStart = true; // Zorgt ervoor dat info éénmalig getoond wordt
@@ -37,6 +37,9 @@ float minTemp = 20.0;
 float maxTemp = 80.0;
 int fanDuty = 0;
 int rawValue = 0;
+float TempCFan1 = 0.0;
+float TempCFan2 = 0.0;
+float TempCFan3 = 0.0;
 
 int rpms[3] = { 0, 0, 0 }; // Array om de RPM waarden op te slaan
 
@@ -64,13 +67,6 @@ const int oneWireBus = 4; // GPIO4 voor 1-Wire DS18B20
 
 OneWire oneWire(oneWireBus);
 DallasTemperature sensors(&oneWire);
-
-// // --- NTC & DIVIDER PARAMETERS ---
-// const float seriesResistor = 10000; // Vaste weerstand van 10k
-// const float nominalResistance = 11500; // NTC weerstand bij 25 graden
-// const float nominalTemperature = 25; // Nominale temp in Celsius
-// const float bCoefficient = 3950; // Beta-waarde van de meeste 10k NTC's
-// const float adcMax = 4095.0; // 12-bit ADC resolutie van de C3
 
 float smoothedTemp = 0.0; // De gefilterde temperatuur
 
@@ -171,13 +167,14 @@ void setup()
 
     // Wacht maximaal 5 seconden tot de monitor verbonden is
     unsigned long start = millis();
+    
     while (!Serial && (millis() - start) < 5000) {
         delay(10);
     }
     Serial.println("Systeem is opgestart.");
 
     sensors.begin();
-   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
     u8g2.begin();
     u8g2.setContrast(10);
 
@@ -200,12 +197,15 @@ void setup()
     manageBrightness();
 
     // Vraag de temperatuur op van alle sensoren
+
+    // Vraag de temperatuur op van alle sensoren
     sensors.requestTemperatures();
     float dsTempC0 = sensors.getTempCByIndex(0);
     float dsTempC1 = sensors.getTempCByIndex(1);
     float dsTempC2 = sensors.getTempCByIndex(2);
     float dsTempC3 = sensors.getTempCByIndex(3);
     tempC = dsTempC0;
+
 
     // Succes schermpje (optioneel)
     const char* Msg = "Systeem Online";
@@ -246,17 +246,6 @@ void loop()
     Serial.print(dsTempC3);
     Serial.println("ºC");
     delay(500);
-
-    // // 2. NTC-update timer (elke 15 minuten = 900.000 ms)
-    // static unsigned long lastNTC_Update = 0;
-    // const unsigned long NTC_Interval = 900000;
-
-    // if (currentMillis - lastNTC_Update >= NTC_Interval || lastNTC_Update == 0) {
-    //     lastNTC_Update = currentMillis;
-    //     // Lees NTC en stuur fan aan
-    //     rawValue = analogRead(ntcPin);
-    //     tempC = calculateCelsius(rawValue);
-    // }
 
     unsigned long currentMillis = millis();
 
@@ -343,7 +332,7 @@ void drawDisplay(struct tm* timeInfo, time_t now)
     u8g2.drawGlyph(14, 10, rssiIcon); // X iets meer ruimte gegeven
 
     // Header
-    u8g2.setFont(u8g2_font_6x12_tr);
+    u8g2.setFont(u8g2_font_mozart_nbp_tf);
     u8g2.drawStr(32, 10, "RADIATOR MONITOR");
     u8g2.drawLine(0, 13, 128, 13);
 
@@ -354,15 +343,8 @@ void drawDisplay(struct tm* timeInfo, time_t now)
     u8g2.print(smoothedTemp, 1); // Toon 1 decimaal
     u8g2.print("ºC"); // Dankzij enableUTF8Print()
 
-    // RPM Rechtsboven
-    u8g2.setFont(u8g2_font_6x10_tr);
-    u8g2.setCursor(80, 28);
-    u8g2.print(rpms[0]);
-    u8g2.setCursor(80, 40);
-    u8g2.print(rpms[1]);
-    u8g2.setCursor(80, 52);
-    u8g2.print(rpms[2]);
-    // PWM Balk onderin
+
+    // PWM Balk midden
     int pwmPercent = map(fanDuty, 0, 1023, 0, 100);
     u8g2.drawFrame(0, 56, 128, 8);
     u8g2.drawBox(2, 58, map(pwmPercent, 0, 100, 0, 124), 4);
@@ -371,6 +353,39 @@ void drawDisplay(struct tm* timeInfo, time_t now)
     u8g2.setCursor(110, 53);
     u8g2.print(pwmPercent);
     u8g2.print("%");
+
+    // RPM Links
+    u8g2.setFont(u8g2_font_mozart_nbp_tf);
+    u8g2.setCursor(0, 80);
+    u8g2.print("Fan 1:");
+    u8g2.print(rpms[0]);
+    u8g2.setCursor(0, 92);
+    u8g2.print("Fan 2:");
+    u8g2.print(rpms[1]);
+    u8g2.setCursor(0, 104);
+    u8g2.print("Fan 3:");
+    u8g2.print(rpms[2]);
+
+    TempCFan1 = sensors.getTempCByIndex(0); // tempC fan Air links
+    TempCFan2 = sensors.getTempCByIndex(1); // tempC fan Middel
+    TempCFan3 = sensors.getTempCByIndex(2); // tempC fan Air rechts
+
+    // tempC fan Air rechts
+    u8g2.setCursor(74, 80);
+    u8g2.print(TempCFan1, 1);u8g2.print("ºC");
+    u8g2.setCursor(74, 92);
+    u8g2.print(TempCFan2, 1);u8g2.print("ºC");
+    u8g2.setCursor(74, 104);
+    u8g2.print(TempCFan3, 1);u8g2.print("ºC");
+
+    // datum en tijd onderaan
+    u8g2.setFont(u8g2_font_4x6_tr);
+    u8g2.setCursor(0, 126);
+    u8g2.print(currentDateStr);
+    u8g2.setCursor(90, 126);
+    u8g2.print(currentTimeStr);
+
+
 
     u8g2.sendBuffer();
     // delay(200);

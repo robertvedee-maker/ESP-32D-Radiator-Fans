@@ -8,7 +8,7 @@
 #include <U8g2lib.h>
 
 // Extern objecten en variabelen (gedefinieerd in main.cpp)
-extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2;
+extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
 extern String sunriseStr;
 extern String sunsetStr;
 extern String currentTimeStr;

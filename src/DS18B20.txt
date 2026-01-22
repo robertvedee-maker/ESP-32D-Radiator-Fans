@@ -1,0 +1,37 @@
+08:56:41.552 > rst:0x8 (TG1WDT_SYS_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+08:56:41.557 > configsip: 0, SPIWP:0xee
+08:56:41.560 > clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+08:56:41.565 > mode:DIO, clock div:2
+08:56:41.568 > load:0x3fff0030,len:1184
+08:56:41.581 > load:0x40078000,len:13232
+08:56:41.634 > load:0x40080400,len:3028
+08:56:41.634 >   #0  0x40080400 in _init at ??:?
+08:56:41.634 >
+08:56:41.634 > entry 0x400805e4
+08:56:41.715 > //
+08:56:41.715 > // Start oneWireSearch.ino
+08:56:41.715 > //
+08:56:41.733 > 
+08:56:41.733 > uint8_t pin4[][8] = {
+08:56:41.733 >   {
+08:56:41.733 > 0x28, 0xEC, 0x54, 0x76, 0x00, 0x00, 0x00, 0x61  },
+08:56:41.749 >   {
+08:56:41.749 > 0x28, 0x7C, 0x6E, 0x6F, 0x00, 0x00, 0x00, 0x42  },
+08:56:41.763 >   {
+08:56:41.763 > 0x28, 0xD2, 0x68, 0x71, 0x00, 0x00, 0x00, 0xBC  },
+08:56:41.779 >   {
+08:56:41.779 > 0x28, 0x99, 0x76, 0x6F, 0x00, 0x00, 0x00, 0xC2  },
+08:56:41.782 > };
+08:56:41.782 > // nr devices found: 4
+08:56:42.728 > ets Jul 29 2019 12:21:46
+08:56:42.728 >
+
+
+15:00:18.015 > entry 0x400805e4
+15:00:20.097 > Dallas Temperature IC Control Library Demo
+15:00:20.288 > Locating devices...Found 4 devices.
+15:00:20.292 > Parasite power is: OFF
+15:00:20.436 > Device 0 Address: 28EC547600000061 fanTempC2
+15:00:20.439 > Device 1 Address: 287C6E6F00000042 fanTempC1
+15:00:20.442 > Device 2 Address: 28D26871000000BC fanTempC3
+15:00:20.445 > Device 3 Address: 2899766F000000C2 radTempC

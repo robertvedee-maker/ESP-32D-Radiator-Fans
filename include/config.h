@@ -23,7 +23,7 @@ constexpr int BAT_GLYPH_LOW = 57922;    // Waffle glyph leeg
 constexpr int BAT_GLYPH_HIGH = 57931;   // Waffle glyph vol
 
 // 2. Extern objecten (gedefinieerd in main.cpp)
-extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2;
+extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
 
 // 3. Globale variabelen (extern)
 extern unsigned long lastBrightnessCheck;
