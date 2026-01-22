@@ -3,23 +3,15 @@
  */
 
 #include "daynight.h"
+#include "data_shared.h" // Cruciaal voor toegang tot sharedData en dataMutex
 #include "helpers.h"
-
-// Het u8g2 object wordt in main.cpp gedefinieerd, we vertellen de compiler dat het bestaat
-// extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2; // Pas het type aan naar jouw specifieke display type!
-
-
-// const char* TZ_INFO = SECRET_TZ_INFO;
-// const char* ntpServer = SECRET_NTP_SERVER;
-double sunrise_local = 0;
-double sunset_local = 0;
-
 
 double latitude = SECRET_LAT;
 double longitude = SECRET_LON;
 
 void manageBrightness()
 {
+    // ... bestaande berekeningen voor sunrise_local ...
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
         return;
@@ -49,5 +41,23 @@ void manageBrightness()
         u8g2.setContrast(100); // Overdag fel
     } else {
         u8g2.setContrast(5); // 's Nachts gedimd
+    }
+
+    // Schrijf de resultaten veilig naar de gedeelde struct
+    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        // Gebruik snprintf voor char-arrays in de struct
+        snprintf(sharedData.sunriseStr, sizeof(sharedData.sunriseStr), "%s", formatTime(sunrise_local).c_str());
+        snprintf(sharedData.sunsetStr, sizeof(sharedData.sunsetStr), "%s", formatTime(sunset_local).c_str());
+        xSemaphoreGive(dataMutex);
+    }
+
+    // Gebruik het u8g2 object via de 'extern' referentie
+    u8g2.setContrast(currentHour > sunrise_local && currentHour < sunset_local ? 100 : 5);
+
+    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        // KOPIEER NAAR DE STRUCT (De nieuwe plek)
+        snprintf(sharedData.sunriseStr, sizeof(sharedData.sunriseStr), "%s", formatTime(sunrise_local).c_str());
+        snprintf(sharedData.sunsetStr, sizeof(sharedData.sunsetStr), "%s", formatTime(sunset_local).c_str());
+        xSemaphoreGive(dataMutex);
     }
 }

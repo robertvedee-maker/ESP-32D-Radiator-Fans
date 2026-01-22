@@ -2,7 +2,7 @@
  * (c)2026 R van Dorland
  */
 
-#include "data_share.h"
+#include "data_shared.h"
 #include "display_logic.h" // Zorg dat deze bovenaan staat
 #include <Arduino.h>
 #include <ArduinoOTA.h>
@@ -23,9 +23,6 @@ extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
 void drawDisplay(struct tm* timeInfo, time_t now);
 void displayTask(void* pvParameters);
 
-// Definieer de extern variabelen uit data_share.h
-SensorData sharedData;
-SemaphoreHandle_t dataMutex;
 
 float smoothedTemp = 0.0;
 // float TempCFan1 = 0.0, TempCFan2 = 0.0, TempCFan3 = 0.0;

@@ -3,7 +3,7 @@
  */
 
 #include "display_logic.h"
-#include "data_share.h" // Nu halen we alles hier vandaan!
+#include "data_shared.h" // Nu halen we alles hier vandaan!
 // Verwijder hier de includes naar onewire_config.h, pwm_config.h, etc.
 
 // extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2; // Blijft extern, want u8g2 is een hardware object

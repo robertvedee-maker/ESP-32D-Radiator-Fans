@@ -71,21 +71,32 @@ inline u8g2_uint_t ALIGN_BOTTOM()
     return String(buffer);
 }
 
-// Update de globale Strings voor tijd en datum
-[[maybe_unused]] inline void updateDateTimeStrings(struct tm* timeInfo)
-{
-    char buff[32];
-
-    // 1. Tijd opmaak
-    snprintf_P(buff, sizeof(buff), PSTR("%02d:%02d:%02d"),
-        timeInfo->tm_hour, timeInfo->tm_min, timeInfo->tm_sec);
-    currentTimeStr = String(buff);
-
-    // 2. Datum opmaak: Zo.11 Jan 2026
-    const char* wday = (const char*)pgm_read_ptr(&wd_nl[timeInfo->tm_wday]);
-    const char* month = (const char*)pgm_read_ptr(&mo_nl[timeInfo->tm_mon]);
-
-    snprintf_P(buff, sizeof(buff), PSTR("%s.%02d %s %04d"),
-        wday, timeInfo->tm_mday, month, timeInfo->tm_year + 1900);
-    currentDateStr = String(buff);
+[[maybe_unused]] void updateDateTimeStrings(struct tm* timeInfo) {
+    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        // Gebruik sharedData. voor de variabelen
+        strftime(sharedData.currentTimeStr, sizeof(sharedData.currentTimeStr), "%H:%M:%S", timeInfo);
+        strftime(sharedData.currentDateStr, sizeof(sharedData.currentDateStr), "%d-%m-%Y", timeInfo);
+        xSemaphoreGive(dataMutex);
+    }
 }
+
+
+
+// // Update de globale Strings voor tijd en datum
+// [[maybe_unused]] inline void updateDateTimeStrings(struct tm* timeInfo)
+// {
+//     char buff[32];
+
+//     // 1. Tijd opmaak
+//     snprintf_P(buff, sizeof(buff), PSTR("%02d:%02d:%02d"),
+//         timeInfo->tm_hour, timeInfo->tm_min, timeInfo->tm_sec);
+//     currentTimeStr = String(buff);
+
+//     // 2. Datum opmaak: Zo.11 Jan 2026
+//     const char* wday = (const char*)pgm_read_ptr(&wd_nl[timeInfo->tm_wday]);
+//     const char* month = (const char*)pgm_read_ptr(&mo_nl[timeInfo->tm_mon]);
+
+//     snprintf_P(buff, sizeof(buff), PSTR("%s.%02d %s %04d"),
+//         wday, timeInfo->tm_mday, month, timeInfo->tm_year + 1900);
+//     currentDateStr = String(buff);
+// }
