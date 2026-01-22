@@ -1,91 +1,36 @@
 /*
- * (c)2026 R van Dorland
+ * (c)2026 R van Dorland - Display Logica
  */
 
-#include <Arduino.h>
-#include <Wire.h>
-#include <ArduinoOTA.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
-
+#include "display_logic.h"
 #include "config.h"
-#include "onewire_config.h"
-#include "pwm_config.h"
-#include "network_logic.h"
-#include "daynight.h"
-#include "helpers.h"
-#include "secret.h"
+#include "onewire_config.h" // Voor tempC
+#include "pwm_config.h"     // Voor rpms
+#include "daynight.h"      // Voor sunrise/sunset strings
+#include <WiFi.h>          // Voor WiFi.RSSI()
 
-U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+extern float smoothedTemp;
+extern float TempCFan1, TempCFan2, TempCFan3;
+extern DallasTemperature sensors;
 
-void drawDisplay(struct tm* timeInfo, time_t now);
+// Gebruik het u8g2 object uit de main
+extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
 
-float smoothedTemp = 0.0;
-// float TempCFan1 = 0.0, TempCFan2 = 0.0, TempCFan3 = 0.0;
-extern float TempCFan1;
-extern float TempCFan2;
-extern float TempCFan3;
-extern float tempC; // De radiator temperatuur
-
-// De "echte" opslagplek voor deze strings:
-String sunriseStr = "--:--";
-String sunsetStr = "--:--";
-String currentTimeStr = "--:--:--";
-String currentDateStr = "--. --:---:----";
-
-void setup() {
-    Serial.begin(115200);
-    
-    // Initialiseer Modules
-    setupOneWire();
-    setupPWM();
-    
-    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+void setupDisplay() {
     u8g2.begin();
     u8g2.setContrast(10);
-
-    setupWiFi(SECRET_SSID, SECRET_PASS);
-    setupOTA(DEVICE_MDNS_NAME);
-    configTzTime(SECRET_TZ_INFO, SECRET_NTP_SERVER);
-
-    fansOn();
-    Serial.println("Systeem Modulair Opgestart.");
+    
+    // Optioneel: Startscherm
+    u8g2.clearBuffer();
+    u8g2.setFont(u8g2_font_6x10_tf);
+    const char* msg = "Systeem Online";
+    u8g2.drawStr(ALIGN_CENTER(msg), 64, msg);
+    u8g2.sendBuffer();
+    delay(1000);
 }
 
-void loop() {
-    ArduinoOTA.handle();
-    
-    // Updates
-    updateTemperatures();
-    updateRPMs();
-    
-    // Tijd & Display logica
-    unsigned long currentMillis = millis();
-    static unsigned long lastDisplayUpdate = 0;
-    
-    if (currentMillis - lastDisplayUpdate >= 1000) {
-        lastDisplayUpdate = currentMillis;
-        time_t now = time(nullptr);
-        struct tm* timeInfo = localtime(&now);
+void updateDisplay(struct tm* timeInfo, time_t now) {
 
-        if (now > 100000) {
-            updateDateTimeStrings(timeInfo);
-            manageBrightness();
-            drawDisplay(timeInfo, now); // De nieuwe overzichtelijke aanroep
-        }
-    }
-    
-    // Debug naar Serial
-    static unsigned long lastLog = 0;
-    if (currentMillis - lastLog >= 5000) {
-        Serial.printf("Temp: %.2fC | RPM1: %d | FanDuty: %d\n", smoothedTemp, rpms[0], fanDuty);
-        lastLog = currentMillis;
-    }
-}
-
-
-void drawDisplay(struct tm* timeInfo, time_t now)
-{
     u8g2.clearBuffer();
     u8g2.enableUTF8Print();
 
@@ -168,4 +113,29 @@ void drawDisplay(struct tm* timeInfo, time_t now)
 
     delay(5000); // Update elke 5 seconden
     u8g2.sendBuffer();
+
+
+
+
+
+    // u8g2.clearBuffer();
+    
+    // // --- Voorbeeld van logica die je uit main.cpp knipt ---
+    
+    // // Kader
+    // u8g2.drawRFrame(0, 0, 128, 128, 5);
+    
+    // // Klok
+    // u8g2.setFont(u8g2_font_logisoso24_tf);
+    // // (Hier komt jouw specifieke code voor currentTimeStr etc.)
+    
+    // // Temperaturen & Fans
+    // u8g2.setFont(u8g2_font_6x10_tf);
+    // u8g2.setCursor(10, 100);
+    // u8g2.print("Temp: "); u8g2.print(tempC); u8g2.print(" C");
+    
+    // u8g2.setCursor(10, 115);
+    // u8g2.print("Fan: "); u8g2.print(rpms[0]); u8g2.print(" RPM");
+
+    // u8g2.sendBuffer();
 }
