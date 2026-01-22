@@ -5,6 +5,17 @@
 
 #pragma once
 #include "config.h"
+// #include "data_shared.h"  // Dit lost de "not declared" fout op!
+#include <Arduino.h>
+#include <time.h>
+#include <U8g2lib.h>
+
+extern DisplayType u8g2;
+
+// Alleen de "kopjes", niet de code zelf:
+String formatTime(double decimalTime);
+void updateDateTimeStrings(struct tm* timeInfo);
+
 
 // Gebruik 'inline' functies. Deze berekenen ALTIJD de actuele waarde
 // op basis van de huidige font en het u8g2 object.
@@ -51,6 +62,8 @@ inline u8g2_uint_t ALIGN_BOTTOM()
     return (u8g2_uint_t)u8g2.getDisplayHeight();
 }
 
+
+/*
 // --- Tijd en Datum Functies ---
 
 // Zet double (18.5) om naar String ("18:30")
@@ -72,11 +85,19 @@ inline u8g2_uint_t ALIGN_BOTTOM()
 }
 
 [[maybe_unused]] void updateDateTimeStrings(struct tm* timeInfo) {
-    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-        // Gebruik sharedData. voor de variabelen
-        strftime(sharedData.currentTimeStr, sizeof(sharedData.currentTimeStr), "%H:%M:%S", timeInfo);
-        strftime(sharedData.currentDateStr, sizeof(sharedData.currentDateStr), "%d-%m-%Y", timeInfo);
-        xSemaphoreGive(dataMutex);
+    // Check of de mutex bestaat (voor de veiligheid)
+    if (dataMutex != NULL) {
+        if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+            
+            // 1. Formatteer tijd naar de struct
+            strftime(sharedData.currentTimeStr, sizeof(sharedData.currentTimeStr), "%H:%M:%S", timeInfo);
+            
+            // 2. Formatteer datum naar de struct
+            // %A = dagnaam, %d = dag, %b = maand, %Y = jaar
+            strftime(sharedData.currentDateStr, sizeof(sharedData.currentDateStr), "%d-%m-%Y", timeInfo);
+            
+            xSemaphoreGive(dataMutex);
+        }
     }
 }
 
@@ -100,3 +121,4 @@ inline u8g2_uint_t ALIGN_BOTTOM()
 //         wday, timeInfo->tm_mday, month, timeInfo->tm_year + 1900);
 //     currentDateStr = String(buff);
 // }
+*/

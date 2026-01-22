@@ -18,9 +18,9 @@
 #include "pwm_config.h"
 #include "secret.h"
 
-extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
+DisplayType u8g2(DISPLAY_ROTATION, DISPLAY_RESET_PIN);
 
-void drawDisplay(struct tm* timeInfo, time_t now);
+// void drawDisplay(struct tm* timeInfo, time_t now);
 void displayTask(void* pvParameters);
 
 
@@ -58,9 +58,9 @@ void TaskWorkerCore0(void* pvParameters)
             if (now > 100000) {
                 updateTemperatures(); // Uit onewire_config.cpp
                 updateRPMs(); // Uit pwm_config.cpp
-                updateDateTimeStrings(timeInfo); // Uit helpers.cpp
+                // updateDateTimeStrings(timeInfo); // Uit helpers.cpp
                 manageBrightness(); // Uit daynight.cpp
-                updateDisplay(timeInfo, now); // Uit display_logic.cpp
+                // updateDisplay(timeInfo, now); // Uit display_logic.cpp
             }
         }
 
@@ -139,9 +139,6 @@ void loop()
 
     // ... verder je network_logic_loop() of pwm_config_loop() ...
 
-    // Updates
-    updateTemperatures();
-    updateRPMs();
 
     // Tijd & Display logica
     unsigned long currentMillis = millis();
@@ -153,19 +150,13 @@ void loop()
         struct tm* timeInfo = localtime(&now);
 
         if (now > 100000) {
-            updateDateTimeStrings(timeInfo);
+            // updateDateTimeStrings(timeInfo);
             manageBrightness();
             drawDisplay(timeInfo, now); // De nieuwe overzichtelijke aanroep
         }
     }
 
-    // Debug naar Serial
-    static unsigned long lastLog = 0;
-    if (currentMillis - lastLog >= 5000) {
-        Serial.printf("Temp: %.2fC | RPM1: %d | FanDuty: %d\n", smoothedTemp, rpms[0], fanDuty);
-        lastLog = currentMillis;
-    }
-
+  
     delay(10);
 
     // De rest van de loop is nu leeg, want alles zit in TaskWorkerCore0

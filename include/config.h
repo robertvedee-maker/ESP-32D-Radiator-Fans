@@ -7,6 +7,15 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 
+
+
+// 2. Extern objecten (gedefinieerd in main.cpp)
+typedef U8G2_SH1107_SEEED_128X128_F_HW_I2C DisplayType;
+// Gebruik constexpr voor hardware-instellingen
+// We gebruiken 'auto' zodat de compiler zelf het juiste u8g2-type kiest
+constexpr auto DISPLAY_ROTATION = U8G2_R0;
+constexpr int8_t DISPLAY_RESET_PIN = U8X8_PIN_NONE;
+
 // 1. Hardware pinnen (gebruikt constexpr in plaats van #define)
 constexpr int I2C_SDA_PIN = 21;
 constexpr int I2C_SCL_PIN = 22;
@@ -22,8 +31,6 @@ constexpr int BAT_MAX_VOLT = 420;       // Hekwerk bovengrens
 constexpr int BAT_GLYPH_LOW = 57922;    // Waffle glyph leeg
 constexpr int BAT_GLYPH_HIGH = 57931;   // Waffle glyph vol
 
-// 2. Extern objecten (gedefinieerd in main.cpp)
-extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
 
 // 3. Globale variabelen (extern)
 extern unsigned long lastBrightnessCheck;
