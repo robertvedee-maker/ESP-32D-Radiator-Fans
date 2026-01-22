@@ -2,44 +2,103 @@
  * (c)2026 R van Dorland
  */
 
+#include "data_share.h"
+#include "display_logic.h" // Zorg dat deze bovenaan staat
 #include <Arduino.h>
-#include <Wire.h>
 #include <ArduinoOTA.h>
-#include <OneWire.h>
 #include <DallasTemperature.h>
+#include <OneWire.h>
+#include <Wire.h>
 
 #include "config.h"
-#include "onewire_config.h"
-#include "pwm_config.h"
-#include "network_logic.h"
 #include "daynight.h"
 #include "helpers.h"
+#include "network_logic.h"
+#include "onewire_config.h"
+#include "pwm_config.h"
 #include "secret.h"
 
-U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
 
 void drawDisplay(struct tm* timeInfo, time_t now);
+void displayTask(void* pvParameters);
+
+// Definieer de extern variabelen uit data_share.h
+SensorData sharedData;
+SemaphoreHandle_t dataMutex;
 
 float smoothedTemp = 0.0;
 // float TempCFan1 = 0.0, TempCFan2 = 0.0, TempCFan3 = 0.0;
-extern float TempCFan1;
-extern float TempCFan2;
-extern float TempCFan3;
-extern float tempC; // De radiator temperatuur
+// extern float TempCFan1;
+// extern float TempCFan2;
+// extern float TempCFan3;
+// extern float tempC; // De radiator temperatuur
 
-// De "echte" opslagplek voor deze strings:
-String sunriseStr = "--:--";
-String sunsetStr = "--:--";
-String currentTimeStr = "--:--:--";
-String currentDateStr = "--. --:---:----";
+// // De "echte" opslagplek voor deze strings:
+// String sunriseStr = "--:--";
+// String sunsetStr = "--:--";
+// String currentTimeStr = "--:--:--";
+// String currentDateStr = "--. --:---:----";
 
-void setup() {
+// Deze functie draait straks op Core 0
+void TaskWorkerCore0(void* pvParameters)
+{
+    // Statische variabelen voor timing binnen deze task
+    static unsigned long lastDisplayUpdate = 0;
+
+    for (;;) { // Een oneindige lus (deze task stopt nooit)
+        unsigned long currentMillis = millis();
+
+        // Doe alle updates die elke seconde nodig zijn
+        if (currentMillis - lastDisplayUpdate >= 1000) {
+            lastDisplayUpdate = currentMillis;
+
+            // Haal de tijd op
+            time_t now = time(nullptr);
+            struct tm* timeInfo = localtime(&now);
+
+            // Alleen actie als tijd geldig is
+            if (now > 100000) {
+                updateTemperatures(); // Uit onewire_config.cpp
+                updateRPMs(); // Uit pwm_config.cpp
+                updateDateTimeStrings(timeInfo); // Uit helpers.cpp
+                manageBrightness(); // Uit daynight.cpp
+                updateDisplay(timeInfo, now); // Uit display_logic.cpp
+            }
+        }
+
+        // Laat de CPU even ademen, voorkomt crashes
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+void setup()
+{
+    delay(1000); // Wacht even voor stabiliteit
+
     Serial.begin(115200);
-    
+
+    dataMutex = xSemaphoreCreateMutex();
+    if (dataMutex == NULL) {
+        Serial.println("FATALE FOUT: Mutex kon niet worden aangemaakt!");
+    }
+
+    // Start de display-taak op Core 0
+    xTaskCreatePinnedToCore(
+        displayTask, // Functie die de taak uitvoert (in display_logic.cpp)
+        "DisplayTask", // Naam van de taak
+        8192, // Stack grootte (ruim voor u8g2)
+        NULL, // Parameters
+        2, // Prioriteit (hoger dan idle)
+        NULL, // Taak handle (niet nodig tenzij je 'm wilt verwijderen)
+        0 // PIN NAAR CORE 0
+    );
+
     // Initialiseer Modules
     setupOneWire();
     setupPWM();
-    
+    setupDisplay(); // Zet I2C op
+
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
     u8g2.begin();
     u8g2.setContrast(10);
@@ -50,19 +109,47 @@ void setup() {
 
     fansOn();
     Serial.println("Systeem Modulair Opgestart.");
+
+    // // Start de worker task op Core 0
+    // xTaskCreatePinnedToCore(
+    //     TaskWorkerCore0, /* Functie naam */
+    //     "DisplaySensorTask", /* Naam van de taak (max 16 karakters) */
+    //     10000, /* Stack size in bytes */
+    //     NULL, /* Parameter (geen) */
+    //     1, /* Prioriteit (0 is laagst, 4 is hoogst) */
+    //     NULL, /* Task handle (geen nodig) */
+    //     0 /* Core ID (0 of 1) */
+    // );
+
+    // Serial.println("Systeem Modulair & Dual-Core Opgestart.");
 }
 
-void loop() {
+void loop()
+{
+    // Dit blijft op Core 1 (WiFi core) draaien
     ArduinoOTA.handle();
-    
+
+    // Deze loop draait op Core 1 (Pro CPU)
+    // Verzamel hier je data en werk de sharedData struct bij (met de mutex!)
+
+    // Voorbeeld van veilig bijwerken van data:
+    if (dataMutex != NULL) {
+        if (xSemaphoreTake(dataMutex, (TickType_t)10) == pdTRUE) {
+            // Update hier sharedData velden (bijv. sharedData.temp_radiator = lees_temp();)
+            xSemaphoreGive(dataMutex); // Geef de mutex direct weer vrij
+        }
+    }
+
+    // ... verder je network_logic_loop() of pwm_config_loop() ...
+
     // Updates
     updateTemperatures();
     updateRPMs();
-    
+
     // Tijd & Display logica
     unsigned long currentMillis = millis();
     static unsigned long lastDisplayUpdate = 0;
-    
+
     if (currentMillis - lastDisplayUpdate >= 1000) {
         lastDisplayUpdate = currentMillis;
         time_t now = time(nullptr);
@@ -74,7 +161,45 @@ void loop() {
             drawDisplay(timeInfo, now); // De nieuwe overzichtelijke aanroep
         }
     }
-    
+
+    // Debug naar Serial
+    static unsigned long lastLog = 0;
+    if (currentMillis - lastLog >= 5000) {
+        Serial.printf("Temp: %.2fC | RPM1: %d | FanDuty: %d\n", smoothedTemp, rpms[0], fanDuty);
+        lastLog = currentMillis;
+    }
+
+    delay(10);
+
+    // De rest van de loop is nu leeg, want alles zit in TaskWorkerCore0
+
+    // CRUCIAAL: Voorkom dat Core 1 te snel runt en crasht
+    vTaskDelay(pdMS_TO_TICKS(10));
+}
+/*
+void loop() {
+    ArduinoOTA.handle();
+
+    // Updates
+    updateTemperatures();
+    updateRPMs();
+
+    // Tijd & Display logica
+    unsigned long currentMillis = millis();
+    static unsigned long lastDisplayUpdate = 0;
+
+    if (currentMillis - lastDisplayUpdate >= 1000) {
+        lastDisplayUpdate = currentMillis;
+        time_t now = time(nullptr);
+        struct tm* timeInfo = localtime(&now);
+
+        if (now > 100000) {
+            updateDateTimeStrings(timeInfo);
+            manageBrightness();
+            drawDisplay(timeInfo, now); // De nieuwe overzichtelijke aanroep
+        }
+    }
+
     // Debug naar Serial
     static unsigned long lastLog = 0;
     if (currentMillis - lastLog >= 5000) {
@@ -82,8 +207,9 @@ void loop() {
         lastLog = currentMillis;
     }
 }
+*/
 
-
+/*
 void drawDisplay(struct tm* timeInfo, time_t now)
 {
     u8g2.clearBuffer();
@@ -169,3 +295,4 @@ void drawDisplay(struct tm* timeInfo, time_t now)
     delay(5000); // Update elke 5 seconden
     u8g2.sendBuffer();
 }
+*/

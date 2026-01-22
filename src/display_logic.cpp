@@ -3,6 +3,126 @@
  */
 
 #include "display_logic.h"
+#include "data_share.h" // Nu halen we alles hier vandaan!
+// Verwijder hier de includes naar onewire_config.h, pwm_config.h, etc.
+
+// extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2; // Blijft extern, want u8g2 is een hardware object
+U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+
+
+// Functie om de hoofd pagina te tekenen (leest data via mutex)
+void drawMainPage(U8G2 *display) {
+    display->clearBuffer();
+    display->setFont(u8g2_font_6x10_tf);
+    display->drawStr(0, 10, "Radiator Monitor");
+
+    // Lees data veilig uit de gedeelde struct
+    if( dataMutex != NULL && xSemaphoreTake( dataMutex, ( TickType_t ) 10 ) == pdTRUE ) {
+        char tempStr[10];
+        sprintf(tempStr, "%.1f C", sharedData.smoothedTemp);
+        display->setFont(u8g2_font_helvR18_tf);
+        display->drawStr(0, 40, tempStr);
+        // ... teken de rest van je waarden ...
+
+        xSemaphoreGive( dataMutex ); // Vrijgeven!
+    } else {
+        display->drawStr(0, 40, "Geen Data");
+    }
+
+    display->sendBuffer();
+}
+
+
+// Hier komt de displayCpuStats() functie van eerder, aangepast
+// ... (code weggelaten voor beknoptheid, maar plaats hem hier)
+
+// De hoofdtaak voor het display, draait op Core 0
+void displayTask(void *pvParameters) {
+    // Initialiseer je display hier, NA setup() in main.cpp is gerund
+    // u8g2.begin();
+
+    // Enum en touch logica van eerdere suggestie hier implementeren
+    // Screen currentScreen = MAIN_PAGE;
+    // ... touch logic variables ...
+
+    for (;;) {
+        // handleTouch(); // Controleer de touch input
+
+        // if (currentScreen == MAIN_PAGE) {
+        //     drawMainPage(&u8g2);
+        // } else {
+        //     displayCpuStats(&u8g2); 
+        // }
+
+        // Deze delay is CRUCIAAL voor Core 0, anders triggert de Watchdog
+        vTaskDelay(pdMS_TO_TICKS(50)); // Update frequentie van 20Hz
+    }
+}
+
+
+
+
+
+
+/*
+// Functie om de hoofd pagina te tekenen (leest data via mutex)
+void drawMainPage(U8G2* display)
+{
+    display->clearBuffer();
+    display->enableUTF8Print();
+
+    // LEES DATA VEILIG VIA MUTEX
+    if (dataMutex != NULL && xSemaphoreTake(dataMutex, (TickType_t)50) == pdTRUE) {
+        // --- Hier komt NU bijna 1-op-1 je bestaande updateDisplay code ---
+
+        // --- 1. Bovenste balk: Iconen & Datum (gebruik sharedData.) ---
+        display->setFont(u8g2_font_waffle_t_all);
+        display->drawGlyph(0, 10, sharedData.ntpIcon);
+        display->drawGlyph(14, 10, sharedData.rssiIcon);
+
+        // Header
+        display->setFont(u8g2_font_mozart_nbp_tf);
+        display->drawStr(32, 10, "RADIATOR MONITOR");
+        display->drawLine(0, 13, 128, 13);
+
+        // Grote Temperatuur Weergave
+        display->setFont(u8g2_font_helvB18_tf);
+        display->setCursor(0, 40);
+        display->print(sharedData.smoothedTemp, 1); // Gebruik sharedData
+        display->print("ºC");
+
+        // PWM Balk midden (gebruik sharedData.fanDuty)
+        int pwmPercent = map(sharedData.fanDuty, 0, 1023, 0, 100);
+        // ... (rest van de tekenlogica blijft hetzelfde) ...
+
+        // RPM Links (gebruik sharedData.rpms)
+        // ...
+
+        // tempC fan Air rechts (gebruik sharedData.tempCFan1/2/3)
+        // Let op: Verwijder de sensors.getTempCByIndex() oproepen hier!
+        // Die horen thuis in je onewire_config.cpp file op Core 1.
+
+        // datum en tijd onderaan (gebruik sharedData.currentDateStr/TimeStr)
+        // ...
+
+        // -------------------------------------------------------------
+
+        xSemaphoreGive(dataMutex); // Geef de mutex direct weer vrij
+    } else {
+        display->drawStr(0, 64, "Data Locked!");
+    }
+
+    display->sendBuffer();
+    // Verwijder de delay(5000) hier! Die hoort in de displayTask loop.
+}
+
+// Hier komt je displayTask(void* pvParam) functie die de main loop vervangt
+// en de paginanavigatie (MainPage vs StatsPage) afhandelt.
+
+/*
+
+#include "display_logic.h"
+#include "data_share.h"
 #include "config.h"
 #include "onewire_config.h" // Voor tempC
 #include "pwm_config.h"     // Voor rpms
@@ -16,15 +136,68 @@ extern DallasTemperature sensors;
 // Gebruik het u8g2 object uit de main
 extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
 
+
+// Functie om de hoofd pagina te tekenen (leest data via mutex)
+void drawMainPage(U8G2 *display) {
+    display->clearBuffer();
+    display->setFont(u8g2_font_6x10_tf);
+    display->drawStr(0, 10, "Radiator Monitor");
+
+    // Lees data veilig uit de gedeelde struct
+    if( dataMutex != NULL && xSemaphoreTake( dataMutex, ( TickType_t ) 10 ) == pdTRUE ) {
+        char tempStr[10];
+        sprintf(tempStr, "%.1f C", sharedData.temp_radiator);
+        display->setFont(u8g2_font_helvR18_tf);
+        display->drawStr(0, 40, tempStr);
+        // ... teken de rest van je waarden ...
+
+        xSemaphoreGive( dataMutex ); // Vrijgeven!
+    } else {
+        display->drawStr(0, 40, "Geen Data");
+    }
+
+    display->sendBuffer();
+}
+
+// Hier komt de displayCpuStats() functie van eerder, aangepast
+// ... (code weggelaten voor beknoptheid, maar plaats hem hier)
+
+// De hoofdtaak voor het display, draait op Core 0
+void displayTask(void *pvParameters) {
+    // Initialiseer je display hier, NA setup() in main.cpp is gerund
+    // u8g2.begin();
+
+    // Enum en touch logica van eerdere suggestie hier implementeren
+    // Screen currentScreen = MAIN_PAGE;
+    // ... touch logic variables ...
+
+    for (;;) {
+        // handleTouch(); // Controleer de touch input
+
+        // if (currentScreen == MAIN_PAGE) {
+        //     drawMainPage(&u8g2);
+        // } else {
+        //     displayCpuStats(&u8g2);
+        // }
+
+        // Deze delay is CRUCIAAL voor Core 0, anders triggert de Watchdog
+        vTaskDelay(pdMS_TO_TICKS(50)); // Update frequentie van 20Hz
+    }
+}
+
+
+
+
 void setupDisplay() {
     u8g2.begin();
     u8g2.setContrast(10);
-    
+
     // Optioneel: Startscherm
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_6x10_tf);
     const char* msg = "Systeem Online";
-    u8g2.drawStr(ALIGN_CENTER(msg), 64, msg);
+    int x = (128 - u8g2.getStrWidth(msg)) / 2;
+    u8g2.drawStr(x, 64, msg);
     u8g2.sendBuffer();
     delay(1000);
 }
@@ -119,23 +292,24 @@ void updateDisplay(struct tm* timeInfo, time_t now) {
 
 
     // u8g2.clearBuffer();
-    
+
     // // --- Voorbeeld van logica die je uit main.cpp knipt ---
-    
+
     // // Kader
     // u8g2.drawRFrame(0, 0, 128, 128, 5);
-    
+
     // // Klok
     // u8g2.setFont(u8g2_font_logisoso24_tf);
     // // (Hier komt jouw specifieke code voor currentTimeStr etc.)
-    
+
     // // Temperaturen & Fans
     // u8g2.setFont(u8g2_font_6x10_tf);
     // u8g2.setCursor(10, 100);
     // u8g2.print("Temp: "); u8g2.print(tempC); u8g2.print(" C");
-    
+
     // u8g2.setCursor(10, 115);
     // u8g2.print("Fan: "); u8g2.print(rpms[0]); u8g2.print(" RPM");
 
     // u8g2.sendBuffer();
 }
+*/
