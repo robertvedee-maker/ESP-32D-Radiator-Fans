@@ -42,7 +42,7 @@ const int tachoPin1 = 25; // GPIO25 voor Tachometer (met 10k pull-up!)
 const int tachoPin2 = 26; // GPIO26 voor Tachometer (met 10k pull-up!)
 const int tachoPin3 = 27; // GPIO27 voor Tachometer (met 10k pull-up!)
 const int pwrFanPin = 33; // GPIO33 om 12V voeding van de fan te schakelen (optioneel)
-const int oneWireBus = 15; // GPIO15 voor 1-Wire DS18B20
+const int oneWireBus = 4; // GPIO4 voor 1-Wire DS18B20
 
 OneWire oneWire(oneWireBus);
 DallasTemperature sensors(&oneWire);
@@ -119,6 +119,8 @@ void fansOn()
  */
 void setup()
 {
+    delay(1000); // Wacht even voor stabiliteit
+    
     pinMode(fanPwmPin, INPUT);
     // Start met een veilige lage snelheid (ca. 10%)
     // ledcWrite(pwmChannel, 50);
