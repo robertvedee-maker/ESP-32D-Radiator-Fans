@@ -6,7 +6,8 @@
 #include "helpers.h"
 
 // Het u8g2 object wordt in main.cpp gedefinieerd, we vertellen de compiler dat het bestaat
-extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2; // Pas het type aan naar jouw specifieke display type!
+// extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2; // Pas het type aan naar jouw specifieke display type!
+
 
 // const char* TZ_INFO = SECRET_TZ_INFO;
 // const char* ntpServer = SECRET_NTP_SERVER;

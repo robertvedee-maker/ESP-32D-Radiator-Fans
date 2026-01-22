@@ -1,26 +1,36 @@
+/*
+ * (c)2026 R van Dorland
+ */
+
 #include "daynight.h"
+// #include "envSensors.h"
+#include "helpers.h"
 #include "network_logic.h" // Volgorde is hier erg belangrijk. niet aanpassen!
 #include "secret.h"
 #include <Arduino.h>
+#include <ArduinoOTA.h>
 #include <DallasTemperature.h>
 #include <OneWire.h>
+#include <WiFi.h>
 #include <Wire.h>
-#include <helpers.h>
-#include <math.h> // Nodig voor log() berekening
+// #include <Wire.h>
+// #include <helpers.h>
+// #include <math.h> // Nodig voor log() berekening
 
-// U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE); // OLED 1.50 128x128
-// U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE); //OLED 1.54 128x64
-U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE); // OLED 1.30 128x64
-// U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE); // OLED 1.54 128x64
-
-// End of constructor list
+// U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.50 128x128
+// // U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); //OLED 1.54 128x64
+U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.30 128x64
+// U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // OLED 1.54 128x64
 
 bool eersteStart = true; // Zorgt ervoor dat info éénmalig getoond wordt
+extern bool isNightMode; // Track day/night mode for clock display
 
-String sunriseStr = "--:--";
-String sunsetStr = "--:--";
-String currentTimeStr = "--:--:--";
-String currentDateStr = "--. --:---:----";
+extern int setBrightness; // Desired backlight brightness
+extern double sunrise_local; // Local sunrise time (hours)
+extern double sunset_local; // Local sunset time (hours)
+extern String sunriseStr;
+extern String sunsetStr;
+
 String TempC = "0.0";
 float tempC = 0.0;
 float minTemp = 20.0;
@@ -30,11 +40,19 @@ int rawValue = 0;
 
 int rpms[3] = { 0, 0, 0 }; // Array om de RPM waarden op te slaan
 
-// De "belofte" aan de compiler dat deze functie verderop staat:
-void drawDisplay(struct tm* timeInfo, time_t now);
+// unsigned long mainLoopTimer = 0;
+// const unsigned long mainLoopInterval = 60000;
 
 unsigned long lastBrightnessCheck = 0;
 const unsigned long brightnessInterval = 60000; // 1 minuut
+
+String sunriseStr = "--:--";
+String sunsetStr = "--:--";
+String currentTimeStr = "--:--:--";
+String currentDateStr = "--. --:---:----";
+
+// De "belofte" aan de compiler dat deze functie verderop staat:
+void drawDisplay(struct tm* timeInfo, time_t now);
 
 // Pin definities
 const int fanPwmPin = 13; // GPIO13 voor PWM output naar ventilator
@@ -47,12 +65,12 @@ const int oneWireBus = 4; // GPIO4 voor 1-Wire DS18B20
 OneWire oneWire(oneWireBus);
 DallasTemperature sensors(&oneWire);
 
-// --- NTC & DIVIDER PARAMETERS ---
-const float seriesResistor = 10000; // Vaste weerstand van 10k
-const float nominalResistance = 11500; // NTC weerstand bij 25 graden
-const float nominalTemperature = 25; // Nominale temp in Celsius
-const float bCoefficient = 3950; // Beta-waarde van de meeste 10k NTC's
-const float adcMax = 4095.0; // 12-bit ADC resolutie van de C3
+// // --- NTC & DIVIDER PARAMETERS ---
+// const float seriesResistor = 10000; // Vaste weerstand van 10k
+// const float nominalResistance = 11500; // NTC weerstand bij 25 graden
+// const float nominalTemperature = 25; // Nominale temp in Celsius
+// const float bCoefficient = 3950; // Beta-waarde van de meeste 10k NTC's
+// const float adcMax = 4095.0; // 12-bit ADC resolutie van de C3
 
 float smoothedTemp = 0.0; // De gefilterde temperatuur
 
@@ -120,7 +138,7 @@ void fansOn()
 void setup()
 {
     delay(1000); // Wacht even voor stabiliteit
-    
+
     pinMode(fanPwmPin, INPUT);
     // Start met een veilige lage snelheid (ca. 10%)
     // ledcWrite(pwmChannel, 50);
@@ -147,14 +165,24 @@ void setup()
     pinMode(tachoPin3, INPUT_PULLUP); // Extra veiligheid naast externe pull-up
     attachInterrupt(digitalPinToInterrupt(tachoPin3), countPulses3, FALLING);
 
-    // 1. Hardware basis
+    // --- Hardware basis ---
+
     Serial.begin(115200);
+
+    // Wacht maximaal 5 seconden tot de monitor verbonden is
+    unsigned long start = millis();
+    while (!Serial && (millis() - start) < 5000) {
+        delay(10);
+    }
+    Serial.println("Systeem is opgestart.");
+
     sensors.begin();
-    Wire.begin(I2C_SDA, I2C_SCL);
+   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
     u8g2.begin();
     u8g2.setContrast(10);
 
-    // 2. Netwerk (nu lekker kort!)
+    // --- Netwerk Instellen ---
+    delay(500); // Korte adempauze voor de spanningsregelaar
     setupWiFi(SECRET_SSID, SECRET_PASS);
 
     // fetchWeather(); // Haal direct het eerste weerbericht op
@@ -171,9 +199,7 @@ void setup()
     // Initialiseer eerste waarden
     manageBrightness();
 
-    // 1. Lees NTC en stuur fan aan
-    // rawValue = analogRead(ntcPin);
-    // tempC = calculateCelsius(rawValue);
+    // Vraag de temperatuur op van alle sensoren
     sensors.requestTemperatures();
     float dsTempC0 = sensors.getTempCByIndex(0);
     float dsTempC1 = sensors.getTempCByIndex(1);
@@ -184,11 +210,13 @@ void setup()
     // Succes schermpje (optioneel)
     const char* Msg = "Systeem Online";
     u8g2.clearBuffer();
-    u8g2.drawRFrame(0, 0, LCDWidth, LCDHeight, 5);
-    u8g2.drawStr(ALIGN_CENTER(Msg), ALIGN_V_CENTER, Msg);
+    u8g2.drawRFrame(0, 0, GET_LCD_WIDTH(), GET_LCD_HEIGHT(), 5);
+    u8g2.drawStr(ALIGN_CENTER(Msg), ALIGN_V_CENTER(), Msg);
     // u8g2.print(WiFi.localIP().toString());
     u8g2.sendBuffer();
     delay(1000);
+
+    // Zet de fans aan na de setup
     fansOn();
 }
 
@@ -219,8 +247,6 @@ void loop()
     Serial.println("ºC");
     delay(500);
 
-    unsigned long currentMillis = millis();
-
     // // 2. NTC-update timer (elke 15 minuten = 900.000 ms)
     // static unsigned long lastNTC_Update = 0;
     // const unsigned long NTC_Interval = 900000;
@@ -231,6 +257,8 @@ void loop()
     //     rawValue = analogRead(ntcPin);
     //     tempC = calculateCelsius(rawValue);
     // }
+
+    unsigned long currentMillis = millis();
 
     // 3. Display en Tijd update timer (elke seconde = 1000 ms)
     static unsigned long lastDisplayUpdate = 0;
@@ -256,8 +284,6 @@ void loop()
             drawDisplay(timeInfo, now);
         }
     }
-    // timeClient.update(); // Update time from NTP (if needed)
-    // unsigned long currentTime = timeClient.getEpochTime(); // Get current Unix time
 
     // rawValue = analogRead(ntcPin);
     rawValue = dsTempC3; // Voor NTC simulatie met DS18B20
@@ -358,6 +384,6 @@ void drawDisplay(struct tm* timeInfo, time_t now)
     // Serial.print(rpm);
     // Serial.println(" RPM");
 
-    delay(2000); // Update elke 2 seconden
+    delay(5000); // Update elke 5 seconden
     u8g2.sendBuffer();
 }

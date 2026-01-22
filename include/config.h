@@ -8,8 +8,8 @@
 #include <U8g2lib.h>
 
 // 1. Hardware pinnen (gebruikt constexpr in plaats van #define)
-constexpr int I2C_SDA_PIN = 5;
-constexpr int I2C_SCL_PIN = 6;
+constexpr int I2C_SDA_PIN = 21;
+constexpr int I2C_SCL_PIN = 22;
 
 // Gebruik 6dB attenuatie voor 0-2.2V bereik (nauwkeuriger voor spanningsdeler 1/2)
 // analogSetPinAttenuation(BATTERY_PIN, ADC_6db); in de void setup()
@@ -23,7 +23,7 @@ constexpr int BAT_GLYPH_LOW = 57922;    // Waffle glyph leeg
 constexpr int BAT_GLYPH_HIGH = 57931;   // Waffle glyph vol
 
 // 2. Extern objecten (gedefinieerd in main.cpp)
-extern U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2;
+extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2;
 
 // 3. Globale variabelen (extern)
 extern unsigned long lastBrightnessCheck;
