@@ -146,6 +146,7 @@ void drawDisplay(struct tm* timeInfo, time_t now)
     }
 
     // 3. Teken het juiste scherm
+    u8g2.setContrast(d.displayContrast); // Pas het contrast aan volgens de gedeelde data
     u8g2.clearBuffer();
     switch (d.huidigeFase) {
     case KOUDE_START:
@@ -170,7 +171,7 @@ void displayTask(void* pvParameters)
         time_t now = time(nullptr);
         struct tm* timeInfo = localtime(&now);
         // if (now > 100000) {
-        //     drawDisplay(timeInfo, now);
+            drawDisplay(timeInfo, now);
         // }
         vTaskDelay(pdMS_TO_TICKS(100)); // Teken 10x per seconde
     }

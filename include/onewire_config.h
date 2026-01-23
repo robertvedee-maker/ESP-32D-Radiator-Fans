@@ -10,8 +10,8 @@ extern const int oneWireBus;
 extern OneWire oneWire;             // EXTERN toevoegen
 extern DallasTemperature sensors;   // EXTERN toevoegen
 
-void setupOneWire();
-void updateTemperatures();
+// void setupOneWire();
+void updateTemperatures(); 
 
 extern float TempCFan1;
 extern float TempCFan2;

@@ -24,157 +24,66 @@ DisplayType u8g2(DISPLAY_ROTATION, DISPLAY_RESET_PIN);
 void displayTask(void* pvParameters);
 void sensorTask(void* pvParameters);
 
-// Deze functie draait straks op Core 0
-void TaskWorkerCore0(void* pvParameters)
-{
-    // Statische variabelen voor timing binnen deze task
-    static unsigned long lastDisplayUpdate = 0;
-
-    for (;;) { // Een oneindige lus (deze task stopt nooit)
-        unsigned long currentMillis = millis();
-
-        // Doe alle updates die elke seconde nodig zijn
-        if (currentMillis - lastDisplayUpdate >= 1000) {
-            lastDisplayUpdate = currentMillis;
-
-            // Haal de tijd op
-            time_t now = time(nullptr);
-            struct tm* timeInfo = localtime(&now);
-
-            // Alleen actie als tijd geldig is
-            if (now > 100000) {
-                updateTemperatures(); // Uit onewire_config.cpp
-                updateRPMs(); // Uit pwm_config.cpp
-                // updateDateTimeStrings(timeInfo); // Uit helpers.cpp
-                manageBrightness(); // Uit daynight.cpp
-                // updateDisplay(timeInfo, now); // Uit display_logic.cpp
-            }
-        }
-
-        // Laat de CPU even ademen, voorkomt crashes
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-}
-
-void setup()
-{
-    delay(1000); // Wacht even voor stabiliteit
-
+void setup() {
+    delay(1000); 
     Serial.begin(115200);
 
+    // 1. Mutex als allereerste
     dataMutex = xSemaphoreCreateMutex();
-    if (dataMutex == NULL) {
-        Serial.println("FATALE FOUT: Mutex kon niet worden aangemaakt!");
-    }
-
-    // Initialiseer de startfase hier, veilig na de mutex
+    
+    // 2. Hardware Initialisatie
+    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+    u8g2.begin();
+    setupPWM(); // Vergeet deze niet te un-commenten
+    
+    // 3. Status instellen
     if (esp_reset_reason() == ESP_RST_POWERON) {
         sharedData.huidigeFase = KOUDE_START;
         sharedData.faseVervaltijd = millis() + 4000;
     } else {
-        // Bij warme start: sla het IP-scherm over of toon het heel kort
-        sharedData.huidigeFase = INFO_SCHERM; // Software reset
+        sharedData.huidigeFase = INFO_SCHERM;
         sharedData.faseVervaltijd = millis() + 2000;
     }
 
-    // Start de display-taak op Core 0
-    xTaskCreatePinnedToCore(
-        displayTask, // Functie die de taak uitvoert (in display_logic.cpp)
-        "DisplayTask", // Naam van de taak
-        8192, // Stack grootte (ruim voor u8g2)
-        NULL, // Parameters
-        2, // Prioriteit (hoger dan idle)
-        NULL, // Taak handle (niet nodig tenzij je 'm wilt verwijderen)
-        0 // PIN NAAR CORE 0
-    );
-
-    xTaskCreatePinnedToCore(
-        sensorTask, // Functie naam
-        "SensorTask", // Naam voor debuggen
-        2048, // Stack size
-        NULL, // Parameters
-        2, // Prioriteit (bijv. 2)
-        NULL, // Task handle
-        0 // Op Core 0
-    );
-
-    xTaskCreatePinnedToCore(
-        pwmTask, /* Functie naam */
-        "RadiatorFansTask", /* Naam van de taak (max 16 karakters) */
-        2048, /* Stack size in bytes */
-        NULL, /* Parameter (geen) */
-        1, /* Prioriteit (0 is laagst, 4 is hoogst) */
-        NULL, /* Task handle (geen nodig) */
-        0 /* Core ID (0 of 1) */
-    );
-
-        // Start de worker task op Core 0
-    xTaskCreatePinnedToCore(
-        TaskWorkerCore0, /* Functie naam */
-        "DisplaySensorTask", /* Naam van de taak (max 16 karakters) */
-        10000, /* Stack size in bytes */
-        NULL, /* Parameter (geen) */
-        1, /* Prioriteit (0 is laagst, 4 is hoogst) */
-        NULL, /* Task handle (geen nodig) */
-        0 /* Core ID (0 of 1) */
-    );
-
-
-    // Initialiseer Modules
-    // setupPWM();
-
-    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
-    u8g2.begin();
-    u8g2.setContrast(10);
-
+    // 4. Netwerk & Tijd (Core 0 - De "Systeem" core)
     setupWiFi(SECRET_SSID, SECRET_PASS);
     setupOTA(DEVICE_MDNS_NAME);
     configTzTime(SECRET_TZ_INFO, SECRET_NTP_SERVER);
 
-    fansOn();
+    // 5. Taken aanmaken
+    
+    // Display & UI (Core 1 - De "Applicatie" core)
+    // We geven deze een hoge prioriteit zodat het scherm soepel ververst
+    xTaskCreatePinnedToCore(displayTask, "DisplayTask", 8192, NULL, 3, NULL, 1);
 
-    Serial.println("Systeem Modulair & Dual-Core Opgestart.");
+    // Sensoren & PWM berekeningen (Core 1)
+    xTaskCreatePinnedToCore(sensorTask, "SensorTask", 4096, NULL, 2, NULL, 1);
+    
+    fansOn();
+    Serial.println("Systeem Dual-Core Opgestart.");
 }
 
-void loop()
-{
-    // Dit blijft op Core 1 (WiFi core) draaien
+void loop() {
+
+    // Core 1 wordt ook gebruikt door loop(). 
+    // Omdat we OTA gebruiken, houden we dit hier.
     ArduinoOTA.handle();
-
-    // Deze loop draait op Core 1 (Pro CPU)
-    // Verzamel hier je data en werk de sharedData struct bij (met de mutex!)
-
-    // Voorbeeld van veilig bijwerken van data:
-    if (dataMutex != NULL) {
-        if (xSemaphoreTake(dataMutex, (TickType_t)10) == pdTRUE) {
-            // Update hier sharedData velden (bijv. sharedData.temp_radiator = lees_temp();)
-            xSemaphoreGive(dataMutex); // Geef de mutex direct weer vrij
-        }
-    }
-
-    // ... verder je network_logic_loop() of pwm_config_loop() ...
-
-    // Tijd & Display logica
-    unsigned long currentMillis = millis();
-    static unsigned long lastDisplayUpdate = 0;
-
-    if (currentMillis - lastDisplayUpdate >= 1000) {
-        lastDisplayUpdate = currentMillis;
+    
+    // Optioneel: Update hier de systeem-tijd strings voor sharedData
+    static unsigned long lastTimeUpdate = 0;
+    if (millis() - lastTimeUpdate >= 1000) {
+        lastTimeUpdate = millis();
+        
         time_t now = time(nullptr);
         struct tm* timeInfo = localtime(&now);
 
-        if (now > 100000) {
-            // updateDateTimeStrings(timeInfo);
-            manageBrightness();
-            drawDisplay(timeInfo, now); // De nieuwe overzichtelijke aanroep
+        if (now > 100000 && xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50))) {
+            // Update hier je sharedData.currentTime etc.
+            // Zodat displayTask dit simpelweg kan uitlezen.
+            xSemaphoreGive(dataMutex);
         }
     }
 
-    delay(10);
-
-    // De rest van de loop is nu leeg, want alles zit in TaskWorkerCore0
-
-    // CRUCIAAL: Voorkom dat Core 1 te snel runt en crasht
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(10)); // Cruciaal voor stabiliteit
 }
 

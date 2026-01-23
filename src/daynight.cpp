@@ -2,10 +2,10 @@
  * (c)2026 R van Dorland
  */
 
-#include "daynight.h"
-#include "helpers.h"
+ #include "helpers.h"
 #include "data_shared.h"
 #include "config.h"
+#include "daynight.h"
 
 void manageBrightness()
 {
@@ -15,8 +15,7 @@ void manageBrightness()
     time_t now = time(nullptr);
     double transit, sunrise, sunset;
 
-    // 1. Bereken de tijden (UTC)
-    // De variabelen latitude en longitude moeten ergens gedefinieerd zijn (bijv. in config.h)
+    // 1. Bereken de zonsopkomst en -ondergang (UTC)
     calcSunriseSunset(now, SECRET_LAT, SECRET_LON, transit, sunrise, sunset);
 
     // 2. Bepaal de lokale offset
@@ -24,18 +23,31 @@ void manageBrightness()
     double sunrise_local = sunrise + utcOffset;
     double sunset_local = sunset + utcOffset;
 
-    // 3. EENMALIG de data veilig wegschrijven naar de 'verzameltank'
-    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-        snprintf(sharedData.sunriseStr, sizeof(sharedData.sunriseStr), "%s", formatTime(sunrise_local).c_str());
-        snprintf(sharedData.sunsetStr, sizeof(sharedData.sunsetStr), "%s", formatTime(sunset_local).c_str());
-        xSemaphoreGive(dataMutex);
+    // 3. Bepaal het gewenste contrast (zonder het display direct aan te raken)
+    double currentHour = timeinfo.tm_hour + (timeinfo.tm_min / 60.0);
+    uint8_t targetContrast;
+    
+    if (currentHour > sunrise_local && currentHour < sunset_local) {
+        targetContrast = 100; // Dag-stand
+    } else {
+        targetContrast = 5;   // Nacht-stand
     }
 
-    // 4. Contrast regelen
-    double currentHour = timeinfo.tm_hour + (timeinfo.tm_min / 60.0);
-    if (currentHour > sunrise_local && currentHour < sunset_local) {
-        u8g2.setContrast(100); 
-    } else {
-        u8g2.setContrast(5); 
+    // 4. ALLES in één keer veilig naar sharedData schrijven
+    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        
+        // Schrijf de zonsopkomst/ondergang strings
+        snprintf(sharedData.sunriseStr, sizeof(sharedData.sunriseStr), "%s", formatTime(sunrise_local).c_str());
+        snprintf(sharedData.sunsetStr, sizeof(sharedData.sunsetStr), "%s", formatTime(sunset_local).c_str());
+        
+        // Schrijf de huidige tijd string
+        snprintf(sharedData.currentTime, sizeof(sharedData.currentTime), "%02d:%02d:%02d", 
+                 timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+        
+        // Schrijf het contrast niveau weg (de displayTask leest dit uit!)
+        sharedData.displayContrast = targetContrast;
+
+        xSemaphoreGive(dataMutex);
     }
 }
+

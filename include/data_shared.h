@@ -21,7 +21,7 @@ typedef struct {
     SysteemStatus huidigeFase;
     unsigned long faseVervaltijd;
 
-    bool eersteStart;
+    // bool eersteStart;
     unsigned long startSchermVervaltijd;
     char sunriseStr[20];
     char sunsetStr[20];
@@ -31,10 +31,15 @@ typedef struct {
     float tempCFan1, tempCFan2, tempCFan3;
     // voeg hier ook de rpms, fanDuty, currentDateStr, currentTimeStr toe
 
-    int rpms[3];
+    int fanRPM1, fanRPM2, fanRPM3; // Compact en duidelijk
     int fanDuty;
+
     char currentDateStr[20]; // Ruime buffer
     char currentTimeStr[20]; // Ruime buffer
+    char currentTime[9]; // "HH:MM:SS"
+    char currentDate[11]; // "DD-MM-YYYY"
+    uint8_t displayContrast; // Waarde 0-255
+
     long ntpIcon;
     long rssiIcon;
     bool timeValid;

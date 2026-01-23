@@ -1,5 +1,5 @@
 /*
- * (c)2026 R van Dorland Netwerk functies
+ * (c)2026 R van Dorland - Network Logic Header
  */
 
 #pragma once

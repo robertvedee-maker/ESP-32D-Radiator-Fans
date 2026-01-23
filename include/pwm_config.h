@@ -13,8 +13,8 @@ extern const int tachoPin3;
 extern const int pwrFanPin;
 
 // Functies
-void setupPWM();
 void updateRPMs();
+void setupPWM();
 void fansOff();
 void fansOn();
 

@@ -12,7 +12,7 @@
 
 // Functie declaratie
 void manageBrightness();
-void updateDateTimeStrings(struct tm* timeInfo);
+// void updateDateTimeStrings(struct tm* timeInfo);
 
 // Extern variabelen (zodat ze ook elders gebruikt kunnen worden indien nodig)
 [[maybe_unused]] extern const char* ntpServer;
