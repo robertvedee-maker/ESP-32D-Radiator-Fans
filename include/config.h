@@ -12,13 +12,12 @@ typedef U8G2_SH1107_SEEED_128X128_F_HW_I2C DisplayType;
 constexpr auto DISPLAY_ROTATION = U8G2_R0; // We gebruiken 'auto' zodat de compiler zelf het juiste u8g2-type kiest
 constexpr int8_t DISPLAY_RESET_PIN = U8X8_PIN_NONE;
 
-// 1.  Hardware pinnen 
+// 1.  Hardware pinnen
 constexpr int I2C_SDA_PIN = 21;
 constexpr int I2C_SCL_PIN = 22;
 
 // Display start scherm duur in milliseconden
 constexpr unsigned long START_SCHERM_DUUR = 5000; // 5 seconden in milliseconden
-
 
 // Gebruik 6dB attenuatie voor 0-2.2V bereik (nauwkeuriger voor spanningsdeler 1/2)
 // analogSetPinAttenuation(BATTERY_PIN, ADC_6db); in de void setup()

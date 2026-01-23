@@ -7,9 +7,6 @@
 #include "data_shared.h"
 #include "config.h"
 
-// Het u8g2 object wordt extern aangeroepen vanuit main
-extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
-
 void manageBrightness()
 {
     struct tm timeinfo;

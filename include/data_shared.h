@@ -1,5 +1,6 @@
 /*
- * (c)2026 R van Dorland - Display Logica
+ * (c)2026 R van Dorland - Gedeelde data structuur en
+ * mutex voor thread-safe toegang
  */
 
 #pragma once
@@ -11,7 +12,9 @@
 enum SysteemStatus {
     KOUDE_START,
     INFO_SCHERM,
-    DASHBOARD
+    DASHBOARD,
+    OTA_START,
+    OTA_PROGRESS,
 };
 
 typedef struct {
