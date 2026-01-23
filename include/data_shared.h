@@ -19,6 +19,9 @@ enum SysteemStatus {
 
 typedef struct {
     SysteemStatus huidigeFase;
+
+    uint8_t otaProgress;
+
     unsigned long faseVervaltijd;
 
     // bool eersteStart;
@@ -45,5 +48,6 @@ typedef struct {
     bool timeValid;
 } SensorData;
 
+// Vertel elke module dat sensorData bestaat
 extern SensorData sharedData;
 extern SemaphoreHandle_t dataMutex;

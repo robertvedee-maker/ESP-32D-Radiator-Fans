@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "data_shared.h"
 #include <Arduino.h>
 #include <U8g2lib.h>
 
@@ -11,3 +12,4 @@
 void toonNetwerkInfo();
 void setupWiFi(const char* ssid, const char* password);
 void setupOTA(const char* hostname);
+

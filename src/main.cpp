@@ -39,10 +39,10 @@ void setup() {
     // 3. Status instellen
     if (esp_reset_reason() == ESP_RST_POWERON) {
         sharedData.huidigeFase = KOUDE_START;
-        sharedData.faseVervaltijd = millis() + 4000;
+        sharedData.faseVervaltijd = millis() + 2000;
     } else {
         sharedData.huidigeFase = INFO_SCHERM;
-        sharedData.faseVervaltijd = millis() + 2000;
+        sharedData.faseVervaltijd = millis() + 1000;
     }
 
     // 4. Netwerk & Tijd (Core 0 - De "Systeem" core)

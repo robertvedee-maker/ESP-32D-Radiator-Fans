@@ -19,6 +19,7 @@ DeviceAddress addrRad = { 0x28, 0x99, 0x76, 0x6F, 0x00, 0x00, 0x00, 0xC2 }; // L
 // DE FUNCTIE IMPLEMENTATIE (De 'Body')
 void updateTemperatures()
 {
+    sensors.setWaitForConversion(false); // <--- Zorg dat deze er staat!
     sensors.requestTemperatures(); // Vraag alle sensoren om data
 
     float t1 = sensors.getTempC(addrFan1);

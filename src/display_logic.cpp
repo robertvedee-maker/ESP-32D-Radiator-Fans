@@ -35,7 +35,7 @@ void drawStartScreen(const SensorData& d)
     u8g2.setFont(u8g2_font_6x10_tr);
     String Msg = "Systeem Start...";
     u8g2.drawStr(ALIGN_CENTER(Msg.c_str()), ALIGN_V_CENTER(), Msg.c_str());
-    u8g2.drawStr(0, 30, d.currentTimeStr);
+    // u8g2.drawStr(0, 30, d.currentTimeStr);
 }
 
 // Tekent het netwerk-informatiescherm (bv. 5 seconden)
@@ -49,7 +49,7 @@ void drawInfoScreen(const SensorData& d)
     String Msg2 = "IP: " + WiFi.localIP().toString();
     u8g2.drawStr(ALIGN_CENTER(Msg2.c_str()), yPos, Msg2.c_str());
     yPos += u8g2.getMaxCharHeight() + 2;
-    String Msg3 = "mDNS: " + String(DEVICE_MDNS_NAME)/* + ".local"*/;
+    String Msg3 = "mDNS: " + String(DEVICE_MDNS_NAME) /* + ".local"*/;
     u8g2.drawStr(ALIGN_CENTER(Msg3.c_str()), yPos, Msg3.c_str());
 }
 
@@ -98,26 +98,59 @@ void drawDashboard(const SensorData& d, time_t now)
     int xPosCntr = u8g2.getDisplayWidth() / 2;
 
     // Fan 1
+    char rpm_Buf[20];
     snprintf(temp_buf, sizeof(temp_buf), "%.1f%cC", d.tempCFan1, 0xB0);
-    u8g2.drawStr(0, yPos, "F1:");
+    u8g2.drawStr(0, yPos, "Fan1:");
     u8g2.drawStr(xPosCntr - 10 - ALIGN_TXT_RIGHT(temp_buf), yPos, temp_buf);
+    snprintf(rpm_Buf, sizeof(rpm_Buf), "%d RPM", d.fanRPM1);
+    u8g2.drawStr(ALIGN_RIGHT(rpm_Buf), yPos, rpm_Buf);
     yPos += u8g2.getMaxCharHeight() + 2;
     // Fan 2
     snprintf(temp_buf, sizeof(temp_buf), "%.1f%cC", d.tempCFan2, 0xB0);
-    u8g2.drawStr(0, yPos, "F2:");
+    u8g2.drawStr(0, yPos, "Fan2:");
     u8g2.drawStr(xPosCntr - 10 - ALIGN_TXT_RIGHT(temp_buf), yPos, temp_buf);
+    snprintf(rpm_Buf, sizeof(rpm_Buf), "%d RPM", d.fanRPM2);
+    u8g2.drawStr(ALIGN_RIGHT(rpm_Buf), yPos, rpm_Buf);
     yPos += u8g2.getMaxCharHeight() + 2;
     // Fan 3
     snprintf(temp_buf, sizeof(temp_buf), "%.1f%cC", d.tempCFan3, 0xB0);
-    u8g2.drawStr(0, yPos, "F3:");
+    u8g2.drawStr(0, yPos, "Fan3:");
     u8g2.drawStr(xPosCntr - 10 - ALIGN_TXT_RIGHT(temp_buf), yPos, temp_buf);
+    snprintf(rpm_Buf, sizeof(rpm_Buf), "%d RPM", d.fanRPM3);
+    u8g2.drawStr(ALIGN_RIGHT(rpm_Buf), yPos, rpm_Buf);
 
     // --- 5. DATUM & TIJD ONDERAAN ---
     u8g2.setFont(u8g2_font_5x8_tf);
     // d.currentTimeStr moet je vullen in je main/network logic
     u8g2.drawStr(0, 128, d.currentTimeStr);
+    u8g2.drawStr(ALIGN_RIGHT(d.currentDateStr), 128, d.currentDateStr);
 
     // Voeg hier de rest van je fans/data toe
+}
+
+// Helper functies voor OTA schermen (bovenaan in display_logic of lokaal)
+void drawOTAScreen(const SensorData& d)
+{
+    u8g2.setFont(u8g2_font_6x10_tr); // Compact font
+    u8g2.drawStr(10, 20, "SYSTEM UPDATE");
+    u8g2.drawFrame(10, 30, 108, 10); // Kader voor voortgangsbalk
+    u8g2.drawStr(10, 55, "Voorbereiden...");
+}
+
+void drawOTAProgress(const SensorData& d)
+{
+    u8g2.setFont(u8g2_font_6x10_tr);
+    u8g2.drawStr(10, 20, "UPDATING...");
+
+    // Voortgangsbalk tekenen
+    u8g2.drawFrame(10, 30, 108, 10);
+    uint8_t barWidth = map(d.otaProgress, 0, 100, 0, 104);
+    u8g2.drawBox(12, 32, barWidth, 6);
+
+    // Percentage tekst
+    char buf[10];
+    sprintf(buf, "%d%%", d.otaProgress);
+    u8g2.drawStr(10, 55, buf);
 }
 
 // --- Hoofd Teken Functie (De State Machine) ---
@@ -148,14 +181,22 @@ void drawDisplay(struct tm* timeInfo, time_t now)
     // 3. Teken het juiste scherm
     u8g2.setContrast(d.displayContrast); // Pas het contrast aan volgens de gedeelde data
     u8g2.clearBuffer();
+    if (d.huidigeFase != DASHBOARD) {
+        u8g2.drawRFrame(1, 1, u8g2.getDisplayWidth() - 2, u8g2.getDisplayHeight() - 2, 6);
+    }
+
     switch (d.huidigeFase) {
     case KOUDE_START:
-        u8g2.drawRFrame(1, 1, u8g2.getDisplayWidth() - 2, u8g2.getDisplayHeight() - 2, 6);
         drawStartScreen(d);
         break;
     case INFO_SCHERM:
-        u8g2.drawRFrame(1, 1, u8g2.getDisplayWidth() - 2, u8g2.getDisplayHeight() - 2, 6);
         drawInfoScreen(d);
+        break;
+    case OTA_START:
+        drawOTAScreen(d);
+        break;
+    case OTA_PROGRESS:
+        drawOTAProgress(d);
         break;
     case DASHBOARD:
         drawDashboard(d, now);
@@ -171,7 +212,7 @@ void displayTask(void* pvParameters)
         time_t now = time(nullptr);
         struct tm* timeInfo = localtime(&now);
         // if (now > 100000) {
-            drawDisplay(timeInfo, now);
+        drawDisplay(timeInfo, now);
         // }
         vTaskDelay(pdMS_TO_TICKS(100)); // Teken 10x per seconde
     }

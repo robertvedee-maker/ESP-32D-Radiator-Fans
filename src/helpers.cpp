@@ -4,9 +4,9 @@
 
 #include "helpers.h"
 #include "data_shared.h"
-#include "onewire_config.h" 
-#include "pwm_config.h"     
-#include "daynight.h"       
+#include "onewire_config.h"
+#include "pwm_config.h"
+#include "daynight.h"
 
 // De logica van de functies
 String formatTime(double decimalTime) {
