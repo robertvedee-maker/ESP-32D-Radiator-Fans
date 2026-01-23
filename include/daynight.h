@@ -1,5 +1,5 @@
 /*
- * (c)2026 R van Dorland
+ * (c)2026 R van Dorland - DayNight beheer voor schermhelderheid en tijdsweergave 
  */
 
 #pragma once

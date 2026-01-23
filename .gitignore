@@ -5,5 +5,7 @@
 .vscode/ipch
 # Mijn eigen geheime bestanden
 include/secret.h
-De CoolMoon ESP-32D lijkt een combi.txt
+De coolMoon ESP-32D lijkt een combi.txt
 DS18B20 gebruiken met een ESP32.txt
+src/DS18B20.txt
+Spiekbriefje.txt

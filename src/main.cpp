@@ -24,7 +24,7 @@ DisplayType u8g2(DISPLAY_ROTATION, DISPLAY_RESET_PIN);
 void displayTask(void* pvParameters);
 
 
-float smoothedTemp = 0.0;
+// float smoothedTemp = 0.0;
 // float TempCFan1 = 0.0, TempCFan2 = 0.0, TempCFan3 = 0.0;
 // extern float TempCFan1;
 // extern float TempCFan2;
@@ -71,6 +71,15 @@ void TaskWorkerCore0(void* pvParameters)
 
 void setup()
 {
+    // if (esp_reset_reason() == ESP_RST_POWERON) {
+    //     sharedData.huidigeFase = KOUDE_START;
+    //     sharedData.faseVervaltijd = millis() + 2000; // 2 sec
+    // } else {
+    //     sharedData.huidigeFase = INFO_SCHERM; // Software reset
+    //     sharedData.faseVervaltijd = millis() + 1000; // 1 sec tonen
+    // }
+
+
     delay(1000); // Wacht even voor stabiliteit
 
     Serial.begin(115200);
@@ -78,6 +87,16 @@ void setup()
     dataMutex = xSemaphoreCreateMutex();
     if (dataMutex == NULL) {
         Serial.println("FATALE FOUT: Mutex kon niet worden aangemaakt!");
+    }
+
+    // Initialiseer de startfase hier, veilig na de mutex
+    if (esp_reset_reason() == ESP_RST_POWERON) {
+        sharedData.huidigeFase = KOUDE_START;
+        sharedData.faseVervaltijd = millis() + 2000; // 2 sec
+    } else {
+        // Bij warme start: sla het IP-scherm over of toon het heel kort
+        sharedData.huidigeFase = INFO_SCHERM; // Software reset
+        sharedData.faseVervaltijd = millis() + 1000; 
     }
 
     // Start de display-taak op Core 0

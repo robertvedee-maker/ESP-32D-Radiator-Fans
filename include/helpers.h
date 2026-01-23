@@ -1,11 +1,11 @@
 
 /*
- * (c)2026 R van Dorland - Helpers (Strakke versie)
+ * (c)2026 R van Dorland - Helpers voor display uitlijning en tijd/datum functies 
  */
 
 #pragma once
+
 #include "config.h"
-// #include "data_shared.h"  // Dit lost de "not declared" fout op!
 #include <Arduino.h>
 #include <time.h>
 #include <U8g2lib.h>
@@ -16,54 +16,26 @@ extern DisplayType u8g2;
 String formatTime(double decimalTime);
 void updateDateTimeStrings(struct tm* timeInfo);
 
-
 // Gebruik 'inline' functies. Deze berekenen ALTIJD de actuele waarde
 // op basis van de huidige font en het u8g2 object.
 // We gebruiken u8g2_uint_t als return type om de compiler tevreden te houden
 
-inline u8g2_uint_t GET_LCD_WIDTH()
-{
-    return u8g2.getDisplayWidth();
-}
-
-inline u8g2_uint_t GET_LCD_HEIGHT()
-{
-    return u8g2.getDisplayHeight();
-}
-
+inline u8g2_uint_t GET_LCD_WIDTH(){ return u8g2.getDisplayWidth(); }
+inline u8g2_uint_t GET_LCD_HEIGHT(){ return u8g2.getDisplayHeight(); }
 // 1. Horizontale uitlijning
-inline u8g2_uint_t ALIGN_CENTER(const char* t)
-{
-    return (u8g2_uint_t)((u8g2.getDisplayWidth() - u8g2.getUTF8Width(t)) / 2);
-}
-
-inline u8g2_uint_t ALIGN_RIGHT(const char* t)
-{
-    return (u8g2_uint_t)(u8g2.getDisplayWidth() - u8g2.getUTF8Width(t));
-}
-
+inline u8g2_uint_t ALIGN_CENTER(const char* t){ return (u8g2_uint_t)((u8g2.getDisplayWidth() - u8g2.getUTF8Width(t)) / 2); }
+inline u8g2_uint_t ALIGN_RIGHT(const char* t){ return (u8g2_uint_t)(u8g2.getDisplayWidth() - u8g2.getUTF8Width(t)); }
 // 2. Verticale uitlijning
-inline u8g2_uint_t GET_CHAR_HEIGHT()
-{
-    return (u8g2_uint_t)u8g2.getMaxCharHeight();
-}
-
-inline u8g2_uint_t ALIGN_V_CENTER()
-{
-    // Gebruik de interne u8g2 functies voor maximale compatibiliteit
-    return (u8g2_uint_t)((u8g2.getDisplayHeight() + u8g2.getMaxCharHeight()) / 2);
-}
-
+inline u8g2_uint_t GET_CHAR_HEIGHT(){ return (u8g2_uint_t)u8g2.getMaxCharHeight(); }
+inline u8g2_uint_t ALIGN_V_CENTER(){ return (u8g2_uint_t)((u8g2.getDisplayHeight() + u8g2.getMaxCharHeight()) / 2); }
 // 3. Vaste posities
 constexpr u8g2_uint_t ALIGN_LEFT = 0;
 // We berekenen ALIGN_BOTTOM live via het object
-inline u8g2_uint_t ALIGN_BOTTOM()
-{
-    return (u8g2_uint_t)u8g2.getDisplayHeight();
-}
-
+inline u8g2_uint_t ALIGN_BOTTOM(){ return (u8g2_uint_t)u8g2.getDisplayHeight(); }
 
 /*
+* onderstaande kan weg zodra we zeker weten dat de code elders werkt
+
 // --- Tijd en Datum Functies ---
 
 // Zet double (18.5) om naar String ("18:30")

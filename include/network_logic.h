@@ -8,13 +8,14 @@
 #include <U8g2lib.h>
 
 // Extern objecten en variabelen (gedefinieerd in main.cpp)
-extern U8G2_SH1107_SEEED_128X128_F_HW_I2C u8g2;
-extern String sunriseStr;
-extern String sunsetStr;
-extern String currentTimeStr;
-extern String currentDateStr;
-extern bool eersteStart;
-extern unsigned long lastBrightnessCheck;
+// extern DisplayType u8g2;
+
+// extern String sunriseStr;
+// extern String sunsetStr;
+// extern String currentTimeStr;
+// extern String currentDateStr;
+// extern bool eersteStart;
+// extern unsigned long lastBrightnessCheck;
 
 // Constanten omgezet naar constexpr
 // Let op: deze moeten in de header staan als ze overal gebruikt worden

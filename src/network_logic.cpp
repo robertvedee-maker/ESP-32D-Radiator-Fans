@@ -29,7 +29,6 @@ void toonNetwerkInfo() {
         u8g2.sendBuffer();
         delay(4000);
     }
-    eersteStart = false;
 }
 
 void setupWiFi(const char* ssid, const char* password) {
@@ -41,7 +40,7 @@ void setupWiFi(const char* ssid, const char* password) {
     u8g2.setFont(u8g2_font_helvR08_tf);
 
     while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 15000) {
-        const char* msg = "WiFi Verbinden...";
+        const char* msg = "WiFi Verbinden";
         u8g2.clearBuffer();
         u8g2.drawRFrame(0, 0, GET_LCD_WIDTH(), GET_LCD_HEIGHT(), 5);
         u8g2.drawStr(ALIGN_CENTER(msg), ALIGN_V_CENTER(), msg);

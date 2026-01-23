@@ -7,10 +7,21 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
+// Definieer de mogelijke FASES (de 'enum')
+enum SysteemStatus {
+    KOUDE_START,
+    INFO_SCHERM,
+    DASHBOARD
+};
+
 typedef struct {
+    SysteemStatus huidigeFase;
+    unsigned long faseVervaltijd;
+
+    bool eersteStart;
+    unsigned long startSchermVervaltijd;
     char sunriseStr[20];
     char sunsetStr[20];
- 
 
     float tempC; // De radiator temperatuur
     float smoothedTemp;
