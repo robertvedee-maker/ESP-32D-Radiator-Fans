@@ -33,6 +33,7 @@ void sensorTask(void* pvParameters) {
         updateDateTimeStrings(timeInfo);
         updateTemperatures(); // Deze staat in onewire_config.cpp
         updateRPMs();         // Deze staat in pwm_config.cpp
+        setFanSpeed();      // Deze staat in pwm_config.cpp
         manageBrightness();   // Deze staat in daynight.cpp
 
         vTaskDelay(pdMS_TO_TICKS(1000));

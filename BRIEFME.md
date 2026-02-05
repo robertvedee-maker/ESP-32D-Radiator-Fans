@@ -1,3 +1,32 @@
+Project Briefing: ESP32 Radiator Monitor v1.0
+1. Systeem Architectuur
+Controller: ESP32-WROOM-32D (Dual-Core).
+Core-verdeling:
+Core 0: Netwerk-taken (WiFi, OTA, NTP).
+Core 1: Applicatie-logica (Sensoren, PWM-berekening en Display).
+Communicatie: Real-time data-uitwisseling tussen cores via een Mutex-beveiligde struct (sharedData).
+Framework: Arduino ESP32 Core v3.0 (PlatformIO).
+2. Hardware & Beveiliging
+Voeding: 13.5V externe adapter via een expansion board (ESP gevoed via 5V/VIN).
+Temperatuur: 4x DS18B20 OneWire sensoren (3x Fans, 1x Radiator) op GPIO 18 met een 4.7k (of 2.2k) pull-up.
+Fans: 3x 4-pins PWM-ventilatoren.
+PWM-regeling: 25kHz frequentie op GPIO 13, 10-bit resolutie (0-1023).
+Tacho/RPM: GPIO 25, 26, 27 met hardwarematige pull-up naar 3.3V en softwarematige debouncing (3-10ms).
+Safety Fixes:
+Vrijloopdiode (1N4007) over de fan-voedingslijn tegen inductiepieken.
+Geplande upgrade: Opto-geïsoleerde MOSFET module voor galvanische scheiding van het vermogensdeel.
+3. Software Logica
+Temperatuur: Robuuste uitlezing met validatie (negeren van -127°C / 85°C uitschieters).
+Fan-Curve: Progressieve regeling tussen 30°C (1200 RPM / Min PWM) en 55°C (Max RPM / 100% PWM).
+Display: SH1107 OLED op I2C (GPIO 21/22) via U8G2, toont live temps, RPM's en een dynamisch "Fan Power" balkje.
+RPM Filtering: Interrupt-gebaseerde telling met tijdsmeting om ruis op de Tacho-lijn te negeren.
+4. Belangrijke Issues & Oplossingen (Lesson Learned)
+Fysieke schade: Eerdere ESP32 defect geraakt door waarschijnlijk ompoling of inductiepiek; opgelost door nieuwe chip en toevoeging van beveiligingscomponenten.
+Software crashes: TypeError in esptool door ontbrekende FlashID; opgelost door hardwarematige herverbinding van de flash-chip.
+Ruis: 20.000 RPM metingen door interferentie; opgelost door verwijderen van te zware condensatoren (100nF) en implementatie van een softwarematige debounceTime.
+
+
+
 Project Context: ESP32 Radiator Fan Controller (D32 Dual Core)
 Hardware: ESP32-WROOM-32D, SH1107 OLED (I2C), 3x Tacho (ISR + IRAM_ATTR), 1x PWM, DS18B20 OneWire.
 Architectuur: Modulair (Split .h/.cpp).

@@ -80,16 +80,26 @@ void drawDashboard(const SensorData& d, time_t now)
     u8g2.setFont(u8g2_font_4x6_tr);
     u8g2.drawStr(0, 56, "FAN POWER:");
 
-    // PWM Balk onderin
-    int pwmPercent = map(d.fanDuty, 0, 1023, 0, 100);
+    // Gebruik direct de waarde die we al berekend hebben (0-100)
+    int pwmPercent = d.pwmPercentage; 
+    
+    // Teken het kader
     u8g2.drawFrame(0, 60, 128, 8);
-    u8g2.drawBox(2, 62, map(pwmPercent, 0, 100, 0, 124), 4);
+    
+    // Teken de vulling (map de 0-100% naar de 124 pixels breedte van het balkje)
+    if (pwmPercent > 0) {
+        int barWidth = map(pwmPercent, 0, 100, 0, 124);
+        u8g2.drawBox(2, 62, barWidth, 4);
+    }
+
     u8g2.setFont(u8g2_font_4x6_tr);
     u8g2.drawStr(0, 56, "FAN POWER:");
 
     char pwm_buf[10];
     snprintf(pwm_buf, sizeof(pwm_buf), "%d%%", pwmPercent);
-    u8g2.setCursor(127 - u8g2.getStrWidth(pwm_buf), 56);
+    
+    // Rechts uitlijnen van de tekst
+    u8g2.setCursor(128 - u8g2.getStrWidth(pwm_buf), 56);
     u8g2.print(pwm_buf);
 
     // --- 4. FAN LIJST Temperatuur en RPM ---

@@ -35,7 +35,8 @@ typedef struct {
     // voeg hier ook de rpms, fanDuty, currentDateStr, currentTimeStr toe
 
     int fanRPM1, fanRPM2, fanRPM3; // Compact en duidelijk
-    int fanDuty;
+    int pwmPercentage;
+    // int fanDuty;
 
     char currentDateStr[20]; // Ruime buffer
     char currentTimeStr[20]; // Ruime buffer

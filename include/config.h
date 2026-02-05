@@ -9,7 +9,7 @@
 
 // 2. Extern objecten (gedefinieerd in main.cpp)
 typedef U8G2_SH1107_SEEED_128X128_F_HW_I2C DisplayType;
-constexpr auto DISPLAY_ROTATION = U8G2_R0; // We gebruiken 'auto' zodat de compiler zelf het juiste u8g2-type kiest
+constexpr auto DISPLAY_ROTATION = U8G2_R1; // We gebruiken 'auto' zodat de compiler zelf het juiste u8g2-type kiest
 constexpr int8_t DISPLAY_RESET_PIN = U8X8_PIN_NONE;
 
 // 1.  Hardware pinnen

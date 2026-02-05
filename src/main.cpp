@@ -24,18 +24,19 @@ DisplayType u8g2(DISPLAY_ROTATION, DISPLAY_RESET_PIN);
 void displayTask(void* pvParameters);
 void sensorTask(void* pvParameters);
 
-void setup() {
-    delay(1000); 
+void setup()
+{
+    delay(1000);
     Serial.begin(115200);
 
     // 1. Mutex als allereerste
     dataMutex = xSemaphoreCreateMutex();
-    
+
     // 2. Hardware Initialisatie
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
     u8g2.begin();
     setupPWM(); // Vergeet deze niet te un-commenten
-    
+
     // 3. Status instellen
     if (esp_reset_reason() == ESP_RST_POWERON) {
         sharedData.huidigeFase = KOUDE_START;
@@ -51,29 +52,31 @@ void setup() {
     configTzTime(SECRET_TZ_INFO, SECRET_NTP_SERVER);
 
     // 5. Taken aanmaken
-    
+
     // Display & UI (Core 1 - De "Applicatie" core)
     // We geven deze een hoge prioriteit zodat het scherm soepel ververst
     xTaskCreatePinnedToCore(displayTask, "DisplayTask", 8192, NULL, 3, NULL, 1);
 
     // Sensoren & PWM berekeningen (Core 1)
     xTaskCreatePinnedToCore(sensorTask, "SensorTask", 4096, NULL, 2, NULL, 1);
-    
+
+    // fansOff();
     fansOn();
     Serial.println("Systeem Dual-Core Opgestart.");
 }
 
-void loop() {
+void loop()
+{
 
-    // Core 1 wordt ook gebruikt door loop(). 
+    // Core 1 wordt ook gebruikt door loop().
     // Omdat we OTA gebruiken, houden we dit hier.
     ArduinoOTA.handle();
-    
+
     // Optioneel: Update hier de systeem-tijd strings voor sharedData
     static unsigned long lastTimeUpdate = 0;
     if (millis() - lastTimeUpdate >= 1000) {
         lastTimeUpdate = millis();
-        
+
         time_t now = time(nullptr);
         struct tm* timeInfo = localtime(&now);
 
@@ -86,4 +89,3 @@ void loop() {
 
     vTaskDelay(pdMS_TO_TICKS(10)); // Cruciaal voor stabiliteit
 }
-

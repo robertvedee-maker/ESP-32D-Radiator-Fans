@@ -12,9 +12,20 @@ extern const int tachoPin2;
 extern const int tachoPin3;
 extern const int pwrFanPin;
 
+// PWM instellingen
+extern const int pwmFreq;
+extern const int pwmRes;
+extern const int pwmChannel;
+// Temperatuur instellingen
+extern const float minTemp;
+extern const float maxTemp;
+extern float tempC;
+extern float smoothedTemp;
+
 // Functies
 void updateRPMs();
 void setupPWM();
+void setFanSpeed();
 void fansOff();
 void fansOn();
 
